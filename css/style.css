@@ -397,7 +397,7 @@ button {
 }
 
 #app {
-	padding-top: 60px;
+	/* padding-top: 60px; */
 	/* Этот отступ освободит место, которое занял банк */
 }
 
@@ -477,6 +477,33 @@ button {
 	transform: translateY(-8px) rotate(4deg);
 }
 
+#app {
+	/* Включаем флекс-бокс по вертикали */
+	display: flex;
+	flex-direction: column;
+
+	/* Распределяем элементы: равные промежутки МЕЖДУ блоками.
+       Банк прижмется к верху, кнопки к низу, а боты, стол и карты игрока
+       равномерно займут всё пространство по центру. */
+	justify-content: space-around;
+
+	/* Выравниваем все блоки по центру горизонтали */
+	align-items: center;
+
+	/* Растягиваем контейнер строго на всю высоту видимого экрана смартфона */
+	min-height: 100vh;
+	/* Современная замена 100vh для мобильных (учитывает высоту адресной строки) */
+	min-height: 100dvh;
+
+	/* Отступы по краям, чтобы элементы не прилипали к границам экрана */
+	padding: 10px 15px;
+	box-sizing: border-box;
+
+	/* Темный покерный фон для всего приложения */
+	background-color: #0f1216;
+	overflow-x: hidden;
+	/* Защита от случайного горизонтального скролла */
+}
 
 
 /* ИГРОВОЙ СТОЛ (СУКНО) */
@@ -524,7 +551,7 @@ button {
 	left: 50%;
 	transform: translate(-50%, -50%);
 	font-family: 'Georgia', serif;
-	font-size: 2.5em;
+	font-size: 3em;
 	font-weight: bold;
 	color: rgba(201, 166, 107, 0.12);
 	/* Очень прозрачный золотой цвет */
@@ -570,7 +597,7 @@ button {
 	align-items: center;
 	gap: 20px;
 	/* Расстояние между карточками ботов */
-
+	margin-top: 20px;
 
 	/* Отступ сверху, чтобы боты не залезли под банк */
 	width: 100%;
@@ -689,7 +716,7 @@ button {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	gap: 12px;
+	gap: 5px;
 	/* Отступы между кнопками */
 	padding: 16px 20px;
 
@@ -785,6 +812,7 @@ button {
 
 /* Основной контейнер банка и баланса */
 .money {
+	/* width: 110%; */
 	position: fixed;
 	/* Фиксируем вверху экрана */
 	top: 0;
@@ -880,6 +908,18 @@ button {
 		display: inline-block;
 		margin-top: 4.5vh;
 		margin-left: -2vh;
+	}
+
+	.button-panel {
+		gap: 1px;
+		/* Отступы между кнопками */
+		padding: 26px 5px;
+	}
+
+	.cards-table {
+		width: 100%;
+		height: 26vh;
+		border-radius: 13vh;
 	}
 
 }
