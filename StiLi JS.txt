@@ -1,0 +1,35 @@
+
+const showNotification = (obj) => {
+  let div = document.createElement('div');
+  let style = obj['style'];
+
+  for (let elem in style) {
+    div.style[elem] = style[elem];
+  }
+
+  div.textContent = obj["text"];
+  div.classList.add(obj["className"]);
+
+  document.body.append(div);
+
+  
+};
+let a = '200px';
+showNotification({
+  style: {
+    position: 'absolute',
+    left: '200px',
+    top: '200px',
+    backgroundColor: 'red',
+    color: 'black',
+    height: a,
+    width: '500px',
+    fontSize: '24px',
+    display: 'flex',
+    textAlign: 'center',
+    alignItems: 'center',
+    fontWeight: '700',
+  },
+  text: 'Привет. Вы попали на страницу с очень интересными данными',
+  className: 'welcome',
+});
