@@ -396,10 +396,7 @@ button {
 	z-index: 1000;
 }
 
-#app {
-	/* padding-top: 60px; */
-	/* Этот отступ освободит место, которое занял банк */
-}
+
 
 /* ЗОНА ИГРОКА (КАРТЫ И СТАТУС) */
 .player {
@@ -911,13 +908,16 @@ button {
 	}
 
 	.button-panel {
+
 		gap: 1px;
 		/* Отступы между кнопками */
 		padding: 26px 5px;
 	}
 
 	.cards-table {
-		width: 100%;
+		margin-left: -15px;
+		margin-right: -15px;
+		width: 100vw;
 		height: 26vh;
 		border-radius: 13vh;
 	}
