@@ -223,7 +223,7 @@ button {
 
 /* КОНТЕЙНЕР ДЛЯ ДВУХ КАРТ ИГРОКА */
 #cards-p {
-
+	scale: 1.5;
 	width: 90%;
 	display: flex;
 	flex-direction: row;
