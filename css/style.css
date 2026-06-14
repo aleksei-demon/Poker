@@ -12,6 +12,16 @@ body {
 	background: radial-gradient(circle, #226b4d 0%, #113824 100%);
 }
 
+#board {
+	width: 90%;
+	white-space: nowrap;
+	display: flex !important;
+	justify-content: center;
+	/* Центрируем всю группу карт по горизонтали */
+	align-items: center;
+	/* Центрируем по вертикали */
+
+}
 
 
 /* __________________________________________________________________ */
@@ -27,15 +37,16 @@ body {
 
 .card-back {
 	background-color: #6d695c;
-	background-image: repeating-linear-gradient(120deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .1) 2px, transparent 2px, transparent 30px),
-		repeating-linear-gradient(60deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .1) 2px, transparent 2px, transparent 30px),
+	background-image: repeating-linear-gradient(120deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .1) 1px, transparent 1px, transparent 15px),
+		repeating-linear-gradient(60deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .1) 1px, transparent 1px, transparent 15px),
 		linear-gradient(60deg, rgba(0, 0, 0, .1) 25%, transparent 25%, transparent 75%, rgba(0, 0, 0, .1) 75%, rgba(0, 0, 0, .1)),
 		linear-gradient(120deg, rgba(0, 0, 0, .1) 25%, transparent 25%, transparent 75%, rgba(0, 0, 0, .1) 75%, rgba(0, 0, 0, .1));
-	background-size: 35px 60px;
+	background-size: 17.5px 30px;
 	overflow: hidden;
 	color: transparent;
 	cursor: pointer;
 	box-shadow: 2px 0px 5px #000000A8, -2px 0px 3px #000000A8;
+	margin: 0 3%;
 }
 
 .card-front[data-color="black"] {
@@ -63,9 +74,6 @@ body {
 	display: inline-flex !important;
 	justify-content: center;
 	align-items: center;
-
-	/* Дополнительные размеры плашки */
-	background-color: white;
 	cursor: pointer;
 }
 
@@ -74,13 +82,13 @@ body {
 .card-front {
 	font-family: 'Conv_MyFont-Regular', Sans-Serif;
 	background-color: white;
-	font-size: 9vh;
+	font-size: 10vh;
 	color: #000000C8;
 	cursor: pointer;
 	box-shadow: 2px 0px 5px #000000A8, -2px 0px 3px #000000A8;
 
 	display: inline-block;
-	margin-left: 2vw;
+	margin: 0 3%;
 
 	display: inline-flex;
 	justify-content: center;
@@ -187,7 +195,7 @@ button {
 	display: flex;
 	justify-content: center;
 	gap: 10px;
-	padding: 15px;
+	padding: 9px;
 	background-color: rgba(0, 0, 0, 0.8);
 	/* Полупрозрачный фон */
 	z-index: 1000;
@@ -204,14 +212,13 @@ button {
 	justify-content: center;
 	gap: 10px;
 
-	margin: 20px auto;
 	/* Отступы, чтобы отделиться от зеленого стола */
 	width: 100%;
 	max-width: 400px;
 	box-sizing: border-box;
 
 	/* Небольшой запас снизу, чтобы карты не перекрывались кнопками */
-	padding-bottom: 20px;
+	padding-bottom: 12vh;
 }
 
 /* КОНТЕЙНЕР ДЛЯ ДВУХ КАРТ ИГРОКА */
@@ -228,20 +235,7 @@ button {
 
 /* СТИЛИЗАЦИЯ САМИХ КАРТ ИГРОКА (Базовый шаблон для рендера) */
 .player .card {
-
-
-
-
-
-	/* Тройная тень для реалистичного объема (карта как бы парит над столом) */
-	/* box-shadow:
-		0 2px 4px rgba(0, 0, 0, 0.2),
-		0 10px 20px rgba(0, 0, 0, 0.4),
-		inset 0 0 0 1px rgba(0, 0, 0, 0.08); */
-	/* Тонкий внутренний контур */
-
 	transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-	/* Плавный пружинящий эффект */
 	cursor: pointer;
 	z-index: 10;
 }
@@ -319,7 +313,7 @@ button {
 	border-radius: 90px;
 
 	/* Двойной бортик стола (золотой кант + внешняя темная деревянная текстура) */
-	border: 4px solid #c9a66b;
+	border: 4px solid #a48857;
 	/* Золотой ободок */
 	outline: 8px solid #1a1510;
 	/* Темный деревянный борт */
@@ -364,6 +358,7 @@ button {
 	/* 3. Уменьшаем межбуквенный интервал для мобилок, 
 	   чтобы буквы не разъезжались слишком сильно */
 	letter-spacing: 0.15em;
+	z-index: 0;
 }
 
 /* ЗАГОТОВКА ПОД БУДУЩИЕ КАРТЫ СТОЛА (когда они появятся) */
@@ -391,7 +386,7 @@ button {
 	align-items: center;
 	gap: 20px;
 	/* Расстояние между карточками ботов */
-	margin-top: 20px;
+	margin-top: 40px;
 
 	/* Отступ сверху, чтобы боты не залезли под банк */
 	width: 100%;
@@ -408,16 +403,16 @@ button {
 	/* Глубокий темный фон */
 	border: 2px solid rgba(255, 255, 255, 0.05);
 	border-radius: 8px;
-	/* Красивые скругленные углы */
+
 	padding: 12px;
 	text-align: center;
 	box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
 	transition: all 0.3s ease;
 
-	/* Флекс внутри карточки, чтобы имя, баланс и карты шли друг за другом */
+
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
+	gap: 9px;
 }
 
 /* Эффект подсветки, когда бот думает или ходит (можно активировать через класс .active) */
@@ -482,21 +477,8 @@ button {
 	display: flex;
 	justify-content: center;
 	gap: 4px;
-	/* Карты бота лежат рядышком или слегка внахлест */
 	margin-top: 8px;
 	min-height: 50px;
-	/* Резервируем место под карты, чтобы карточка не прыгала */
-}
-
-/* Пример стилизации карт рубашкой вверх (если вы будете рендерить их сюда) */
-.cards-bot .card-shirt {
-	width: 35px;
-	height: 50px;
-	background: linear-gradient(135deg, #7f1d1d 25%, #b91c1c 100%);
-	/* Красная рубашка */
-	border: 1px solid #ef4444;
-	border-radius: 4px;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Панель-контейнер для кнопок */
@@ -512,7 +494,7 @@ button {
 	align-items: center;
 	gap: 5px;
 	/* Отступы между кнопками */
-	padding: 16px 20px;
+	padding: 9px 9px;
 
 	/* Темный полупрозрачный фон с размытием заднего плана (блюр) */
 	background: rgba(15, 18, 22, 0.85);
@@ -606,34 +588,19 @@ button {
 
 /* Основной контейнер банка и баланса */
 .money {
-	/* width: 110%; */
 	position: fixed;
-	/* Фиксируем вверху экрана */
 	top: 0;
-	/* Прижимаем к самому верху */
 	left: 0;
-	/* Растягиваем от левого края */
 	right: 0;
-	/* ...до правого края */
 	z-index: 1000;
-	/* Отображаем поверх игрового стола */
-
-
 	display: flex;
 	justify-content: center;
-
 	align-items: center;
-
 	gap: 8px;
-
-
-
 	padding: 12px 20px;
 	background: linear-gradient(180deg, rgba(20, 25, 30, 0.95) 0%, rgba(10, 12, 15, 0.9) 100%);
 	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-
 	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-
 
 	/* Шрифты */
 	font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -654,7 +621,6 @@ button {
 	border-radius: 4px;
 }
 
-/* Выделяем игровой БАНК (обычно он золотой или желтый) */
 #bank {
 	color: #ffd700;
 	/* Золотой цвет */
@@ -663,7 +629,6 @@ button {
 	text-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
 }
 
-/* Выделяем БЮДЖЕТ игрока (зеленый — цвет денег) */
 #p-balance {
 	color: #2ecc71;
 	/* Приятный зеленый цвет */
@@ -672,7 +637,6 @@ button {
 	text-shadow: 0 0 8px rgba(46, 204, 113, 0.3);
 }
 
-/* Стилизуем разделительную черту "|" */
 .money span:nth-child(3) {
 	color: rgba(255, 255, 255, 0.2);
 	margin: 0 10px;
@@ -680,29 +644,7 @@ button {
 }
 
 
-
 @media screen and (orientation: portrait) {
-	.playerzone {
-		width: 96vw;
-		height: 26vh;
-		display: grid;
-		grid-template-columns: repeat(12, 16vw);
-		grid-template-rows: repeat(1, 1vh);
-
-	}
-
-	.pole {
-		width: 96vw;
-		height: 26vh;
-		grid-template-columns: repeat(12, 4vh 20vh);
-		grid-template-rows: repeat(1, 1vh);
-	}
-
-	.p-card {
-		display: inline-block;
-		margin-top: 4.5vh;
-		margin-left: -2vh;
-	}
 
 	.button-panel {
 
@@ -732,5 +674,48 @@ button {
 	#cards-p {
 		margin-bottom: 10vh;
 	}
+
+	#board {
+		width: 90%;
+		white-space: nowrap;
+	}
+
+	/* #board .card-front,
+	#board .card-back {
+		margin-left: -10%;
+		translate: 5%;
+	} */
+
+
+
+
+
+
+
+
+	#board {
+		display: grid !important;
+		/* Центрируем саму сетку на столе */
+		justify-content: center;
+		align-items: center;
+
+		/* МАГИЯ ГРИДОВ: Создаем 5 колонок. 
+		   Ширина каждой колонки на широком экране — 7vw (примерная ширина карты).
+		   Но при сужении экрана они могут сжиматься вплоть до 2vw, заставляя карты плавно наезжать друг на друга! */
+		grid-template-columns: repeat(5, minmax(5vw, 22vw));
+
+		/* Ограничиваем максимальную ширину блока, чтобы веер не растягивался шире сукна */
+		max-width: 75vw;
+		margin: 0 auto;
+	}
+
+
+	/* Самую первую карту на столе не сдвигаем влево, чтобы не ломать центровку всего ряда */
+	#board .card:first-child {
+		margin-left: 0 !important;
+		translate: 0 !important;
+	}
+
+
 
 }

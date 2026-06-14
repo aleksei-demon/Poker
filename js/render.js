@@ -64,7 +64,7 @@ const myFields = [
     },
 
     // О Б Щ И Й   С Т О Л
-    { tag: 'section', class: 'cards-table', children: [{ tag: 'p.#board' }] },
+    { tag: 'section', class: 'cards-table', children: [{ tag: 'div.#board' }] },
 
     // И Г Р О К
     { tag: 'section', class: 'player', children: [{ tag: 'div.dealer-chip', innerText: 'D' }, { tag: 'p.#cards-p' }] },
