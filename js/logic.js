@@ -85,8 +85,40 @@ function runBotLogic(botId) {
 //-------ПРИМЕР ВЫЗОВА Ф ИГРЫ------------------
 
 
+// Функция раздачи конкретного количества карт в конкретное место
+function dealCards(deck, count, targetId, isSecret = false) {
+    const cardsToGive = [];
 
+    for (let i = 0; i < count; i++) {
+        const topCard = deck.pop(); // Отрезаем карту из колоды, уменьшая её
+        if (topCard) {
+            cardsToGive.push(topCard);
+        }
+    }
 
+    // Отправляем отрезанные карты на отрисовку
+    renderCardsTo(cardsToGive, targetId, isSecret);
+}
+
+// Функция ТЕСТОВОЙ РАЗДАЧИ для настройки твоего интерфейса
+function runTestDistribution() {
+    // 1. Очищаем зоны перед тестом (чтобы карты не дублировались при повторном нажатии)
+    document.querySelectorAll('#board, #cards-p, #cards-1, #cards-2, #cards-3').forEach(el => el.innerHTML = '');
+
+    // 2. Раздаем ботам по 2 карты рубашкой вверх (true)
+    dealCards(KOLODA, 2, '#cards-1', true);
+    dealCards(KOLODA, 2, '#cards-2', true);
+    dealCards(KOLODA, 2, '#cards-3', true);
+
+    // 3. Раздаем живому игроку 2 карты лицом вверх (false)
+    dealCards(KOLODA, 2, '#cards-p', false);
+
+    // 4. Выкладываем на стол (board) сразу 5 карт лицом вверх (false)
+    dealCards(KOLODA, 5, '#board', false);
+
+    console.log(`Тестовая раздача выполнена! Остаток карт в колоде: ${KOLODA.length}`);
+}
+runTestDistribution();
 
 
 

@@ -7,208 +7,22 @@
 	font-style: normal;
 }
 
-
-
 body {
 	-webkit-tap-highlight-color: transparent;
 	background: radial-gradient(circle, #226b4d 0%, #113824 100%);
-	/* background-color: #030; */
-	/* background-size: 100px 100px; */
 }
 
+
+
+/* __________________________________________________________________ */
+/* - - - К А Р Т А - - - */
 .card {
-	width: 19vh;
-	height: 26vh;
-	border-radius: 12px;
+	display: inline-block;
+	width: 9.5vh;
+	height: 13vh;
+	border-radius: 6px;
 	user-select: none;
 	overflow: hidden;
-}
-
-.c0 {
-	grid-column-start: 1;
-	z-index: 11;
-}
-
-.c1 {
-	grid-column-start: 2;
-	z-index: 12;
-}
-
-.c2 {
-	grid-column-start: 3;
-	z-index: 13;
-}
-
-.c3 {
-	grid-column-start: 4;
-	z-index: 14;
-}
-
-.c4 {
-	grid-column-start: 5;
-	z-index: 15;
-}
-
-.c5 {
-	grid-column-start: 6;
-	z-index: 16;
-}
-
-.c6 {
-	grid-column-start: 7;
-	z-index: 17;
-}
-
-.c7 {
-	grid-column-start: 8;
-	z-index: 18;
-}
-
-.c8 {
-	grid-column-start: 9;
-	z-index: 19;
-}
-
-.c9 {
-	grid-column-start: 10;
-	z-index: 20;
-}
-
-.c10 {
-	grid-column-start: 11;
-	z-index: 21;
-}
-
-.c11 {
-	grid-column-start: 12;
-	z-index: 22;
-}
-
-.c12 {
-	grid-column-start: 13;
-	z-index: 23;
-}
-
-.c13 {
-	grid-column-start: 14;
-	z-index: 24;
-}
-
-.c14 {
-	grid-column-start: 15;
-	z-index: 25;
-}
-
-.c15 {
-	grid-column-start: 16;
-	z-index: 26;
-}
-
-.c16 {
-	grid-column-start: 17;
-	z-index: 27;
-}
-
-.c17 {
-	grid-column-start: 18;
-	z-index: 28;
-}
-
-.c18 {
-	grid-column-start: 19;
-	z-index: 29;
-}
-
-.c19 {
-	grid-column-start: 20;
-	z-index: 30;
-}
-
-.c20 {
-	grid-column-start: 21;
-	z-index: 31;
-}
-
-.c21 {
-	grid-column-start: 22;
-	z-index: 32;
-}
-
-.c22 {
-	grid-column-start: 23;
-	z-index: 33;
-}
-
-.c23 {
-	grid-column-start: 24;
-	z-index: 34;
-}
-
-.c24 {
-	grid-column-start: 25;
-	z-index: 35;
-}
-
-
-
-.d0 {
-	grid-column-start: 1;
-	z-index: 11;
-}
-
-.d1 {
-	grid-column-start: 2;
-	z-index: 12;
-}
-
-.d2 {
-	grid-column-start: 3;
-	z-index: 13;
-}
-
-.d3 {
-	grid-column-start: 4;
-	z-index: 14;
-}
-
-.d4 {
-	grid-column-start: 5;
-	z-index: 15;
-}
-
-.d5 {
-	grid-column-start: 6;
-	z-index: 16;
-}
-
-.d6 {
-	grid-column-start: 7;
-	z-index: 17;
-}
-
-.d7 {
-	grid-column-start: 8;
-	z-index: 18;
-}
-
-.d8 {
-	grid-column-start: 9;
-	z-index: 19;
-}
-
-.d9 {
-	grid-column-start: 10;
-	z-index: 20;
-}
-
-.d10 {
-	grid-column-start: 11;
-	z-index: 21;
-}
-
-.d11 {
-	grid-column-start: 12;
-	z-index: 22;
 }
 
 .card-back {
@@ -226,73 +40,52 @@ body {
 
 .card-front[data-color="black"] {
 	color: #0c0c0c;
-	/* Красивый глубокий черный */
 }
 
 .card-front[data-color="red"] {
 	color: #ea1219;
-	/* Яркий покерный красный */
 }
 
-/* Обновленные стили для карт */
-.card-font {
-	font-family: 'Conv_MyFont-Regular', sans-serif;
-	font-size: 60px;
-	/* Размер самого шрифта-карты */
 
-	/* Превращаем span в полноценную карточку */
-	display: inline-block;
-	width: 60px;
-	/* Фиксированная ширина карты */
-	height: 85px;
-	/* Фиксированная высота карты */
-	line-height: 85px;
-	/* Центрируем букву по вертикали */
-	text-align: center;
-	/* Центрируем букву по горизонтали */
 
-	/* Делаем красивую рубашку/фон и рамку */
-	background-color: #ffffff;
-	/* Белый фон карты */
-	border: 2px solid #cbd5e1;
-	/* Спокойная серая рамка */
-	border-radius: 6px;
-	/* Скругление углов карты */
+/* Базовые железные правила для ЛЮБОЙ карты (и лица, и рубашки) */
+.card,
+.card-front {
+	/* 1. Намертво вшиваем покерный шрифт именно сюда */
+	font-family: 'Conv_MyFont-Regular', Sans-Serif !important;
+	/* font-size: 21vh !important; */
 
-	/* Небольшие отступы между картами, чтобы они не слипались */
-	margin-right: 8px;
+	/* 2. Сбрасываем любые родительские отступы текста */
+	text-indent: 0 !important;
+	letter-spacing: normal !important;
 
-	/* Легкая тень, чтобы карты "отрывались" от стола */
-	box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+	/* 3. Включаем идеальное центрирование через Flexbox */
+	display: inline-flex !important;
+	justify-content: center;
+	align-items: center;
 
-	/* Плавный переход цвета при смене (если будет анимация) */
-	transition: all 0.2s ease;
+	/* Дополнительные размеры плашки */
+	background-color: white;
+	cursor: pointer;
 }
-
 
 
 
 .card-front {
 	font-family: 'Conv_MyFont-Regular', Sans-Serif;
 	background-color: white;
-	font-size: 21vh;
+	font-size: 9vh;
 	color: #000000C8;
 	cursor: pointer;
 	box-shadow: 2px 0px 5px #000000A8, -2px 0px 3px #000000A8;
 
-
 	display: inline-block;
-	margin-top: 4vh;
-	margin-left: 2vh;
+	margin-left: 2vw;
 
 	display: inline-flex;
-	/* Делаем блок флексовым */
 	justify-content: center;
-	/* Выравнивание по горизонтали (влево/центр/вправо) */
 	align-items: center;
-	/* Выравнивание по вертикали (верх/центр/низ) */
-	padding-top: 2vh;
-
+	padding-top: 1vh;
 }
 
 .card-front:hover {
@@ -303,13 +96,17 @@ body {
 	z-index: 100;
 }
 
+.white {
+	color: #a2a7699b;
+}
+
 .red {
 	color: #8B0000C8;
 }
 
-/* .redKozur {
-	background-color: #ffe7e7;
-} */
+/* - - - К А Р Т А - - - */
+/* ====================================================== */
+
 
 .p-card {
 	display: inline-block;
@@ -419,27 +216,28 @@ button {
 
 /* КОНТЕЙНЕР ДЛЯ ДВУХ КАРТ ИГРОКА */
 #cards-p {
+
+	width: 90%;
 	display: flex;
+	flex-direction: row;
 	justify-content: center;
 	align-items: center;
 	gap: 14px;
-	/* Расстояние между двумя картами в руке */
+
 }
 
 /* СТИЛИЗАЦИЯ САМИХ КАРТ ИГРОКА (Базовый шаблон для рендера) */
 .player .card {
-	width: 75px;
-	/* Карты игрока крупнее: 75px против 60px у стола */
-	height: 105px;
-	background-color: #ffffff;
-	border-radius: 8px;
-	/* Красивое скругление углов */
+
+
+
+
 
 	/* Тройная тень для реалистичного объема (карта как бы парит над столом) */
-	box-shadow:
+	/* box-shadow:
 		0 2px 4px rgba(0, 0, 0, 0.2),
 		0 10px 20px rgba(0, 0, 0, 0.4),
-		inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+		inset 0 0 0 1px rgba(0, 0, 0, 0.08); */
 	/* Тонкий внутренний контур */
 
 	transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -570,8 +368,7 @@ button {
 
 /* ЗАГОТОВКА ПОД БУДУЩИЕ КАРТЫ СТОЛА (когда они появятся) */
 .cards-table .card {
-	width: 60px;
-	height: 85px;
+
 	background-color: #ffffff;
 	border-radius: 6px;
 	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
@@ -603,13 +400,14 @@ button {
 
 /* 2. КАРТОЧКА МЕСТА БОТА */
 .bot-place {
+	white-space: nowrap;
 	flex: 1;
 	max-width: 180px;
 	/* Ограничиваем ширину, чтобы на десктопе не были огромными */
 	background: rgba(30, 38, 45, 0.85);
 	/* Глубокий темный фон */
 	border: 2px solid rgba(255, 255, 255, 0.05);
-	border-radius: 12px;
+	border-radius: 8px;
 	/* Красивые скругленные углы */
 	padding: 12px;
 	text-align: center;
@@ -635,7 +433,6 @@ button {
 	font-family: 'Segoe UI', Roboto, sans-serif;
 	font-size: 14px;
 	font-weight: 700;
-	color: #ffffff;
 	letter-spacing: 0.02em;
 }
 
@@ -920,6 +717,20 @@ button {
 		width: 100vw;
 		height: 26vh;
 		border-radius: 13vh;
+	}
+
+	.bot .card-front,
+	.bot .card-back {
+		margin-left: -30%;
+		translate: 15%;
+	}
+
+	.bot-place {
+		width: 30vw;
+	}
+
+	#cards-p {
+		margin-bottom: 10vh;
 	}
 
 }

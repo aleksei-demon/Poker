@@ -10,11 +10,8 @@
 5. render.js   (чертежи компонентов и отрисовка экранов)
 
 */
-
-
-
-
-
+// _____________________________________________________________________________________
+// - - - - -И Н Т Е Р Ф Е Й С  - - - 
 const myFields = [
     // Б А Н К   И   Б А Л А Н С
     {
@@ -38,9 +35,9 @@ const myFields = [
                 class: 'bot-place',
                 children: [
                     { tag: 'div.dealer-chip', innerText: 'D' },
-                    { tag: 'span', innerText: 'Андрей ' },
+                    { tag: 'span.white', innerText: 'Андрей ' },
                     { tag: 'span#bot-balance-1', innerText: '100$' },
-                    { tag: 'div#cards-1', class: 'cards-bot' },
+                    { tag: 'div#cards-1.bot', children: [{ tag: 'span' }] },
                 ]
             },
             // БОТ 2
@@ -48,9 +45,9 @@ const myFields = [
                 id: 'bot-2', class: 'bot-place',
                 children: [
                     { tag: 'div.dealer-chip', innerText: 'D' },
-                    { tag: 'span', innerText: 'Витал ' },
+                    { tag: 'span.white', innerText: 'Витал ' },
                     { tag: 'span#bot-balance-2', innerText: '100$' },
-                    { tag: 'div#cards-2', class: 'cards-bot' },
+                    { tag: 'div#cards-2.bot', children: [{ tag: 'span' }] },
                 ]
             },
             // БОТ 3
@@ -58,19 +55,19 @@ const myFields = [
                 id: 'bot-3', class: 'bot-place',
                 children: [
                     { tag: 'div.dealer-chip', innerText: 'D' },
-                    { tag: 'span', innerText: '404 ' },
+                    { tag: 'span.white', innerText: '404 ' },
                     { tag: 'span#bot-balance-3', innerText: '100$' },
-                    { tag: 'div#cards-3', class: 'cards-bot' },
+                    { tag: 'div#cards-3.bot', children: [{ tag: 'span' }] },
                 ]
             },
         ]
     },
 
     // О Б Щ И Й   С Т О Л
-    { tag: 'section#board', class: 'cards-table' },
+    { tag: 'section', class: 'cards-table', children: [{ tag: 'p.#board' }] },
 
     // И Г Р О К
-    { tag: 'section#cards-p', class: 'player', children: [{ tag: 'div.dealer-chip', innerText: 'D' }] },
+    { tag: 'section', class: 'player', children: [{ tag: 'div.dealer-chip', innerText: 'D' }, { tag: 'p.#cards-p' }] },
 
     // К Н О П К И
     {
@@ -87,57 +84,49 @@ const myFields = [
     },
 ];
 
-
 // 3. Запуск:
-
 const container = h('div#app', {}, factory(myFields, nestedBlueprint));
 document.body.appendChild(container);
 
+// - - - - -И Н Т Е Р Ф Е Й С  - - - 
+//===================================================================================================
 
+//_______________________________________________________________
+// - - - Р Е Н Д Е Р   К А Р Т  - - -
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-
-
-
-function renderCardsTo(cardsArray, target_id) {
-    //  куда складывать карты
+function renderCardsTo(cardsArray, target_id, isSecret = false) {
     const container = document.querySelector(target_id);
+    if (!container) { console.error(`Элемент "${target_id}" не найден!`); return; }
 
-    if (!container) { console.error(`Элемент с селектором "${target_id}" не найден!`); return; }
-
-    container.innerHTML = '';
-
-    // Перебираем массив карт
     cardsArray.forEach(char => {
-        // Создаем span для каждой карты
         const span = document.createElement('span');
-        span.classList.add('card-front', 'card');
-        span.textContent = char;
+        span.textContent = char; // DOM честно знает и помнит букву карты!
 
-        // Автоматом определяем цвет по регистру буквы
+        // Выставляем базовый класс карты и цвет по регистру
+        span.classList.add('card');
         const isRed = char === char.toUpperCase();
         span.dataset.color = isRed ? 'red' : 'black';
 
-        // Добавляем готовую карту в контейнер
+        // Вот она, простая и понятная логика смены классов:
+        if (isSecret) {
+            span.classList.add('card-back');
+        } else {
+            span.classList.add('card-front');
+        }
+
         container.appendChild(span);
     });
 }
+const testerP = ['a', 'j',];
+const tester = ['a', 'j', 'A', 'E', 'm'];
+renderCardsTo(tester, '#board');
+renderCardsTo(testerP, '#cards-p');
+renderCardsTo(testerP, '#cards-2', true);
+renderCardsTo(testerP, '#cards-1',);
+renderCardsTo(testerP, '#cards-3',);
+// - - - Р Е Н Д Е Р   К А Р Т  - - -
+//==============================================================================
 
-renderCardsTo(KOLODA, '#pp');
-//-----------------------------------------------------------------------------------
 
 
 
@@ -178,164 +167,26 @@ renderCardsTo(KOLODA, '#pp');
 
 
 
-/*
-window.addEventListener('pageshow', (event) => {
-    // Если страница загружена из кэша или просто открыта заново
-    if (event.persisted || performance.navigation.type === 2) {
-        // Принудительно рендерим главный экран (Числобог)
-        switchScreen('ЧИСЛОБОГ');
-    }
-});
 
-// Названия разделов (теперь это просто массив данных)
 
 
 
-const nav_configs = [
-    { label: '&nbsp;ЧИСЛОБОГ', value: 'ЧИСЛОБОГ' },
-    { label: '&nbsp;закон Ома', value: 'закон Ома' },
-    { label: '&nbsp;&nbsp;Т. В. З.', value: 'Т. В. З.' },
-    { label: '&nbsp;&nbsp;К. Д. П.', value: 'К. Д. П.', selected: true },
-    { label: '&nbsp;генератор', value: 'генератор' },
-    { label: '&nbsp;Корпус А.С.', value: 'Корпус А.С.' },
-];
 
 
 
-function draw_init() {
-    clear(''); // Полная зачистка
-    document.body.classList.add('body_calc');
-    const startScreen = nav_configs.find(item => item.selected)?.value || nav_configs[0].value;
-    const options = nav_configs.map(item =>
-        h('option.body_calc', {
-            value: item.value,
-            attr: {
-                // Теперь это принудительно запишется в HTML как <option selected="selected">
-                selected: (item.value === startScreen) ? 'selected' : null
-            },
-            innerHTML: item.label,
-        })
-    );
-    const header = h('header#header', {}, [
-        h('form#form2', { onsubmit: e => e.preventDefault() }, [
-            h('select#nav.select', {
-                onchange: (e) => { switchScreen(e.target.value); }
-            }, options),
-        ])
-    ]);
-    const main = h('main#app_content'); // Создаем базу для контента
-    document.body.append(header, main); // Добавляем всё разом
-    switchScreen(startScreen);
-}
 
 
 
 
-// Запуск приложения при загрузке страницы
-window.onload = draw_init;
 
-*/
 
-/*
-const calcFields = [
-    { id: 'op1', hold: ' A', className: 'inputs user_fill', },
-    { id: 'dey', tag: 'select', className: 'select', },
-    { id: 'op2', hold: ' Б', className: 'inputs user_fill' },
-    { id: 'otvet', hold: ' ответ', className: 'inputs result_fill', attr: { readonly: 'readonly' } }
-];
-const calc_configs = [
-    { label: '&nbsp;&nbsp;+', value: '+', selected: true },
-    { label: '&nbsp;&nbsp;-', value: '-' },
-    { label: '&nbsp;&nbsp;*', value: '*' },
-    { label: '&nbsp;&nbsp;/', value: '/' },
-    { label: '^ &nbsp;&nbsp; А в степень Б', value: '^' },
-    { label: '&#8730; &nbsp;&nbsp; степени Б из А', value: '&#8730;' },
-    { label: '% &nbsp;&nbsp; остаток от А/Б ', value: '%' },
-    { label: 'А! &nbsp;&nbsp; факториал', value: 'А!' },
-    { label: 'sin &nbsp;&nbsp;А', value: 'sin' },
-    { label: 'cos &nbsp;&nbsp;А', value: 'cos' },
-    { label: 'log &nbsp;&nbsp; логарифм А по осн. Б', value: 'log' },
-];
-function draw_calc(target) {
-    const targetEl = typeof target === 'string' ? document.querySelector(target) : target;
 
-    // ЗАЩИТА: если таргет не найден, выходим, чтобы не плодить ошибки в консоли
-    if (!targetEl) {
-        console.warn('Target element not found:', target);
-        return;
-    }
-    for (all of document.querySelectorAll('option')) { all.className = 'body_calc'; }
 
-    targetEl.innerHTML = '';
 
-    // Собираем опции
-    const options = calc_configs.map(item =>
-        h('option.body_calc', {
-            value: item.value,
-            selected: item.selected || false,
-            innerHTML: item.label
-        })
-    );
 
-    // Собираем форму одним деревом  
-    const form = h('form#form', { onsubmit: (e) => e.preventDefault() }, [
-        h('input#op1.inputs.user_fill', {
-            placeholder: ' A',
-            attr: { inputmode: 'decimal', autocomplete: 'off' },
-            oninput: (e) => oneOpCalculation(e.target.id),
-            ondblclick: (e) => event_dblclick(e.target.id),
-        }),
 
-        // ВАЖНО: Селект создается сразу с детьми!
-        h('select#dey.select', { onchange: (e) => runCalculator(e.target.id) }, options),
-
-        h('input#op2.inputs.user_fill', {
-            placeholder: ' Б',
-            attr: { inputmode: 'decimal', autocomplete: 'off' },
-            oninput: (e) => oneOpCalculation(e.target.id),
-            ondblclick: (e) => event_dblclick(e.target.id),
-        }),
-        h('input#otvet.inputs.result_fill', { placeholder: ' ответ', readOnly: true, attr: { autocomplete: 'off' }, onclick: (e) => put_to_RAM(e.target.id) }),
-
-        h('div.btn-container', {}, [
-            h('button#sbros.inputs', { innerText: 'С Б Р О С', onclick: () => switchScreen('ЧИСЛОБОГ') })
-        ]),
-
-        h('p.explanation', { innerHTML: 'Даблклик на поле ввода даст число π, следующий число е, а третий 1/2π <br><br><br> Клик на поле "Ответ" скопирует его в буфер обмена' })
-    ]);
-
-    targetEl.append(form);
-}
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//-------------------------------------------------------------------
-
-
-// 3. И в самом низу — запуск приложения
-document.addEventListener('DOMContentLoaded', () => {
-    //switchScreen('ЧИСЛОБОГ');
-    Favicon();
-});
-
-
-
-
+//__________________________________________________________________________________________________________
+// - - - Ф А В И К О Н - - - 
 function Favicon() {
     let iconContent = '';
 
@@ -371,14 +222,7 @@ function Favicon() {
     }
     link.href = 'data:image/svg+xml,' + encodeURIComponent(svgIcon);
 }
-
-
-
-
-
-
-
-
+document.addEventListener('DOMContentLoaded', () => { Favicon(); });
 
 
 
