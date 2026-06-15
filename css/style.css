@@ -17,10 +17,7 @@ body {
 	white-space: nowrap;
 	display: flex !important;
 	justify-content: center;
-	/* Центрируем всю группу карт по горизонтали */
 	align-items: center;
-	/* Центрируем по вертикали */
-
 }
 
 
@@ -57,8 +54,6 @@ body {
 	color: #ea1219;
 }
 
-
-
 /* Базовые железные правила для ЛЮБОЙ карты (и лица, и рубашки) */
 .card,
 .card-front {
@@ -77,8 +72,6 @@ body {
 	cursor: pointer;
 }
 
-
-
 .card-front {
 	font-family: 'Conv_MyFont-Regular', Sans-Serif;
 	background-color: white;
@@ -93,14 +86,10 @@ body {
 	display: inline-flex;
 	justify-content: center;
 	align-items: center;
-	padding-top: 1vh;
+	padding-top: 1.2vh;
 }
 
 .card-front:hover {
-	z-index: 100;
-}
-
-.card_show {
 	z-index: 100;
 }
 
@@ -108,9 +97,14 @@ body {
 	color: #a2a7699b;
 }
 
+/* 
+.card_show {
+	z-index: 100;
+}
+
 .red {
 	color: #8B0000C8;
-}
+} */
 
 /* - - - К А Р Т А - - - */
 /* ====================================================== */
@@ -122,41 +116,41 @@ body {
 	margin-left: -2vh;
 }
 
-.theGame {
+/* .theGame {
 	height: 95vh;
 	display: flex;
 	flex-direction: column;
 	justify-content: space-evenly;
 	align-items: center;
-}
-
+} */
+/* 
 .playerzone {
 	width: 96vw;
 	height: 26vh;
 	display: grid;
 	grid-template-columns: repeat(12, 8vw);
 	grid-template-rows: repeat(1, 1vh);
-}
+} */
 
-.compzone {
+/* .compzone {
 	width: 96vw;
 	height: 26vh;
 	display: grid;
 	grid-template-columns: repeat(48, 2vw);
 	grid-template-rows: repeat(1, 1vh);
-}
+} */
 
-.pole {
+/* .pole {
 	width: 96vw;
 	height: 26vh;
 	display: grid;
 	grid-template-columns: repeat(12, 4vh 20vh);
 	grid-template-rows: repeat(1, 1vh);
-}
+} */
 
-.none {
+/* .none {
 	display: none;
-}
+} */
 
 .message {
 	display: block;
