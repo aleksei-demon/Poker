@@ -67,7 +67,7 @@ const myFields = [
     { tag: 'section', class: 'cards-table', children: [{ tag: 'div.#board' }] },
 
     // И Г Р О К
-    { tag: 'section', class: 'player', children: [{ tag: 'div.dealer-chip', innerText: 'D' }, { tag: 'p.#cards-p' }] },
+    { tag: 'section', class: 'player', children: [{ tag: 'div.dealer-chip', innerText: 'D' }, { tag: 'p#cards-p' }] },
 
     // К Н О П К И
     {
@@ -78,7 +78,7 @@ const myFields = [
             { tag: 'button.btn-check', onclick: () => makeAction('check'), innerText: 'Чек' },
             { tag: 'button.btn-call', onclick: () => makeAction('call'), innerText: 'Колл' },
             { tag: 'button.btn-raise', onclick: () => makeAction('raise'), innerText: 'Рейз' },
-            { tag: 'button.btn-all-in', onclick: () => makeAction('all-in'), innerText: 'Ва-банк' },
+            { tag: 'button#all-in.btn-all-in', onclick: () => makeAction('all-in'), innerText: 'Ва-банк' },
             { tag: 'button.btn-hod', onclick: () => makeAction('hod'), innerText: 'Ход' },
         ]
     },
@@ -93,6 +93,22 @@ document.body.appendChild(container);
 
 //_______________________________________________________________
 // - - - Р Е Н Д Е Р   К А Р Т  - - -
+
+
+
+// const testerP = ['a', 'j',];
+// const tester = ['a', 'j', 'A', 'E', 'm'];
+// renderCardsTo(tester, '#board');
+// renderCardsTo(testerP, '#cards-p');
+// renderCardsTo(testerP, '#cards-2', true);
+// renderCardsTo(testerP, '#cards-1',);
+// renderCardsTo(testerP, '#cards-3',);
+
+// - - - Р Е Н Д Е Р   К А Р Т  - - -
+//==============================================================================
+
+
+
 
 function renderCardsTo(cardsArray, target_id, isSecret = false) {
     const container = document.querySelector(target_id);
@@ -117,17 +133,6 @@ function renderCardsTo(cardsArray, target_id, isSecret = false) {
         container.appendChild(span);
     });
 }
-const testerP = ['a', 'j',];
-const tester = ['a', 'j', 'A', 'E', 'm'];
-renderCardsTo(tester, '#board');
-renderCardsTo(testerP, '#cards-p');
-renderCardsTo(testerP, '#cards-2', true);
-renderCardsTo(testerP, '#cards-1',);
-renderCardsTo(testerP, '#cards-3',);
-// - - - Р Е Н Д Е Р   К А Р Т  - - -
-//==============================================================================
-
-
 
 
 

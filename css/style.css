@@ -9,15 +9,22 @@
 
 body {
 	-webkit-tap-highlight-color: transparent;
-	background: radial-gradient(circle, #226b4d 0%, #113824 100%);
+	/* background: radial-gradient(circle, #226b4d 0%, #113824 100%); */
+	overflow: hidden;
 }
 
 #board {
-	width: 90%;
+	width: 70%;
 	white-space: nowrap;
-	display: flex !important;
+	display: grid !important;
+	/* Центрируем саму сетку на столе */
 	justify-content: center;
 	align-items: center;
+	grid-template-columns: repeat(5, minmax(5vw, 12vw));
+
+	max-width: 75vw;
+	margin: 0 auto;
+	translate: -2vh 0;
 }
 
 
@@ -25,26 +32,28 @@ body {
 /* - - - К А Р Т А - - - */
 .card {
 	display: inline-block;
-	width: 9.5vh;
-	height: 13vh;
-	border-radius: 6px;
+	width: 19vh;
+	height: 26vh;
+	border-radius: 12px;
 	user-select: none;
 	overflow: hidden;
 }
 
 .card-back {
 	background-color: #6d695c;
-	background-image: repeating-linear-gradient(120deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .1) 1px, transparent 1px, transparent 15px),
-		repeating-linear-gradient(60deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .1) 1px, transparent 1px, transparent 15px),
+	background-image: repeating-linear-gradient(120deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .1) 2px, transparent 2px, transparent 30px),
+		repeating-linear-gradient(60deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .1) 2px, transparent 2px, transparent 30px),
 		linear-gradient(60deg, rgba(0, 0, 0, .1) 25%, transparent 25%, transparent 75%, rgba(0, 0, 0, .1) 75%, rgba(0, 0, 0, .1)),
 		linear-gradient(120deg, rgba(0, 0, 0, .1) 25%, transparent 25%, transparent 75%, rgba(0, 0, 0, .1) 75%, rgba(0, 0, 0, .1));
-	background-size: 17.5px 30px;
+	background-size: 35px 60px;
 	overflow: hidden;
 	color: transparent;
 	cursor: pointer;
 	box-shadow: 2px 0px 5px #000000A8, -2px 0px 3px #000000A8;
 	margin: 0 3%;
 }
+
+
 
 .card-front[data-color="black"] {
 	color: #0c0c0c;
@@ -54,10 +63,10 @@ body {
 	color: #ea1219;
 }
 
-/* Базовые железные правила для ЛЮБОЙ карты (и лица, и рубашки) */
+
 .card,
 .card-front {
-	/* 1. Намертво вшиваем покерный шрифт именно сюда */
+
 	font-family: 'Conv_MyFont-Regular', Sans-Serif !important;
 	/* font-size: 21vh !important; */
 
@@ -75,7 +84,7 @@ body {
 .card-front {
 	/* font-family: 'Conv_MyFont-Regular', Sans-Serif; */
 	background-color: white;
-	font-size: 10vh;
+	font-size: 21vh;
 	color: #000000C8;
 	cursor: pointer;
 	box-shadow: 2px 0px 5px #000000A8, -2px 0px 3px #000000A8;
@@ -86,7 +95,7 @@ body {
 	/* display: inline-flex;
 	justify-content: center;
 	align-items: center; */
-	padding-top: 1.2vh;
+	padding-top: 2vh;
 }
 
 .card-front:hover {
@@ -97,63 +106,33 @@ body {
 	color: #a2a7699b;
 }
 
-/* 
-.card_show {
-	z-index: 100;
-}
 
-.red {
-	color: #8B0000C8;
-} */
 
 /* - - - К А Р Т А - - - */
 /* ====================================================== */
 
-
+/* 
 .p-card {
 	display: inline-block;
 	margin-top: 4vh;
 	margin-left: -2vh;
+} */
+
+.bot::before {
+	/* или .bot:before */
+	content: "";
+	width: 0;
+	height: 0;
+	position: absolute;
 }
 
-/* .theGame {
-	height: 95vh;
-	display: flex;
-	flex-direction: column;
-	justify-content: space-evenly;
-	align-items: center;
-} */
-/* 
-.playerzone {
-	width: 96vw;
-	height: 26vh;
-	display: grid;
-	grid-template-columns: repeat(12, 8vw);
-	grid-template-rows: repeat(1, 1vh);
-} */
 
-/* .compzone {
-	width: 96vw;
-	height: 26vh;
-	display: grid;
-	grid-template-columns: repeat(48, 2vw);
-	grid-template-rows: repeat(1, 1vh);
-} */
-
-/* .pole {
-	width: 96vw;
-	height: 26vh;
-	display: grid;
-	grid-template-columns: repeat(12, 4vh 20vh);
-	grid-template-rows: repeat(1, 1vh);
-} */
-
-/* .none {
-	display: none;
-} */
 
 .bot {
-	scale: 0.9;
+	all: unset;
+	height: 14vh;
+	scale: 0.45;
+	translate: -2.4vw -3vh;
 }
 
 .message {
@@ -212,13 +191,16 @@ button {
 
 /* КОНТЕЙНЕР ДЛЯ ДВУХ КАРТ ИГРОКА */
 #cards-p {
-	scale: 1.5;
+	/* scale: 1.5; */
 	width: 90%;
-	display: flex;
-	flex-direction: row;
+	display: grid;
+	grid-auto-flow: column;
 	justify-content: center;
+	align-content: center;
 	align-items: center;
-	gap: 14px;
+	gap: 24px;
+
+	z-index: 500;
 }
 
 /* СТИЛИЗАЦИЯ САМИХ КАРТ ИГРОКА (Базовый шаблон для рендера) */
@@ -285,28 +267,22 @@ button {
 
 /* ИГРОВОЙ СТОЛ (СУКНО) */
 .cards-table {
-	/* Размеры и центрирование */
 	width: 90%;
 	max-width: 700px;
 	height: 180px;
 	margin: 30px auto;
-	/* Отступы сверху и снизу, центрирование по горизонтали */
+
 	padding: 20px;
 	box-sizing: border-box;
 
-	/* Эффект классического зеленого сукна */
 	background: radial-gradient(circle, #1e6b3b 0%, #114223 100%);
 
-	/* Форма стола (овал/скругленный прямоугольник) */
 	border-radius: 90px;
 
-	/* Двойной бортик стола (золотой кант + внешняя темная деревянная текстура) */
-	border: 4px solid #a48857;
-	/* Золотой ободок */
-	outline: 8px solid #1a1510;
-	/* Темный деревянный борт */
 
-	/* Реалистичные тени: объем сукна внутрь + тень стола на пол */
+	border: 4px solid #a48857;
+	outline: 8px solid #1a1510;
+
 	box-shadow:
 		inset 0 0 40px rgba(0, 0, 0, 0.7),
 		0 15px 35px rgba(0, 0, 0, 0.8);
@@ -351,7 +327,7 @@ button {
 
 /* ЗАГОТОВКА ПОД БУДУЩИЕ КАРТЫ СТОЛА (когда они появятся) */
 .cards-table .card {
-
+	scale: 0.5;
 	background-color: #ffffff;
 	border-radius: 6px;
 	z-index: 2;
@@ -373,7 +349,7 @@ button {
 	align-items: center;
 	gap: 20px;
 	/* Расстояние между карточками ботов */
-	margin-top: 40px;
+	margin-top: 45px;
 
 	/* Отступ сверху, чтобы боты не залезли под банк */
 	width: 100%;
@@ -382,9 +358,10 @@ button {
 
 /* 2. КАРТОЧКА МЕСТА БОТА */
 .bot-place {
+	height: 25vh;
 	white-space: nowrap;
 	flex: 1;
-	max-width: 180px;
+	max-width: 160px;
 	/* Ограничиваем ширину, чтобы на десктопе не были огромными */
 	background: rgba(30, 38, 45, 0.85);
 	/* Глубокий темный фон */
@@ -411,7 +388,7 @@ button {
 }
 
 /* 3. ИМЯ БОТА */
-.bot-place span:nth-child(1) {
+.bot-place>span:nth-child(1) {
 	font-family: 'Segoe UI', Roboto, sans-serif;
 	font-size: 14px;
 	font-weight: 700;
@@ -485,7 +462,7 @@ button {
 
 	/* Темный полупрозрачный фон с размытием заднего плана (блюр) */
 	background: rgba(15, 18, 22, 0.85);
-	backdrop-filter: blur(10px);
+	backdrop-filter: blur(2px);
 	border-top: 1px solid rgba(255, 255, 255, 0.08);
 	box-shadow: 0 -4px 25px rgba(0, 0, 0, 0.6);
 }
@@ -634,10 +611,7 @@ button {
 @media screen and (orientation: portrait) {
 
 	.button-panel {
-
 		gap: 1px;
-		/* Отступы между кнопками */
-		padding: 26px 5px;
 	}
 
 	.cards-table {
@@ -649,12 +623,14 @@ button {
 	}
 
 	.bot {
-		scale: 0.8;
+		height: 13vh;
+		scale: 0.4;
+		translate: -4vh -2vh;
 	}
 
 	.bot .card-front,
 	.bot .card-back {
-		margin-left: -30%;
+		margin-left: -36%;
 		translate: 15%;
 	}
 
@@ -698,14 +674,15 @@ button {
 		/* Ограничиваем максимальную ширину блока, чтобы веер не растягивался шире сукна */
 		max-width: 75vw;
 		margin: 0 auto;
+		translate: -5vh;
 	}
 
 
 	/* Самую первую карту на столе не сдвигаем влево, чтобы не ломать центровку всего ряда */
-	#board .card:first-child {
+	/* #board .card:first-child {
 		margin-left: 0 !important;
 		translate: 0 !important;
-	}
+	} */
 
 
 

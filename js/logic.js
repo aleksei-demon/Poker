@@ -71,10 +71,25 @@ const PokerEngine = {
 //================== ↑ М А Ш И Н А ↑ ↑↑↑↑↑↑↑⇑⇑⇑⇑⇑==========================
 //=========================================================
 
-document.querySelector('#btn-allin').addEventListener('click', () => {
-    // Передаем ID игрока (например, 0) и команду
-    PokerEngine.executeAction(0, 'ALL_IN');
-});
+// document.querySelector('#all-in').addEventListener('click', () => {
+//     // Передаем ID игрока (например, 0) и команду
+//     PokerEngine.executeAction(0, 'ALL_IN');
+// });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 function runBotLogic(botId) {
     const decision = analyzeSituation(botId); // Бот подумал и решил сделать RAISE
@@ -118,10 +133,14 @@ function runTestDistribution() {
 
     console.log(`Тестовая раздача выполнена! Остаток карт в колоде: ${KOLODA.length}`);
 }
-runTestDistribution();
 
 
 
+document.addEventListener('DOMContentLoaded', () => {
+    // Ваш код выполнится сразу после построения DOM
+    console.log('DOM дерево полностью построено');
+    runTestDistribution();
+});
 
 
 
