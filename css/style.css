@@ -31,12 +31,17 @@ body {
 /* __________________________________________________________________ */
 /* - - - К А Р Т А - - - */
 .card {
-	display: inline-block;
 	width: 19vh;
 	height: 26vh;
 	border-radius: 12px;
 	user-select: none;
 	overflow: hidden;
+	cursor: pointer;
+	box-shadow: 2px 0px 5px #000000A8, -2px 0px 3px #000000A8;
+	display: inline-flex !important;
+	justify-content: center;
+	align-items: flex-start;
+	padding-top: 3.5vh !important;
 }
 
 .card-back {
@@ -46,14 +51,16 @@ body {
 		linear-gradient(60deg, rgba(0, 0, 0, .1) 25%, transparent 25%, transparent 75%, rgba(0, 0, 0, .1) 75%, rgba(0, 0, 0, .1)),
 		linear-gradient(120deg, rgba(0, 0, 0, .1) 25%, transparent 25%, transparent 75%, rgba(0, 0, 0, .1) 75%, rgba(0, 0, 0, .1));
 	background-size: 35px 60px;
-	overflow: hidden;
 	color: transparent;
-	cursor: pointer;
-	box-shadow: 2px 0px 5px #000000A8, -2px 0px 3px #000000A8;
 	margin: 0 3%;
 }
 
-
+.card-front {
+	font-family: 'Conv_MyFont-Regular', Sans-Serif;
+	background-color: white;
+	font-size: 21vh;
+	color: #000000C8;
+}
 
 .card-front[data-color="black"] {
 	color: #0c0c0c;
@@ -63,60 +70,16 @@ body {
 	color: #ea1219;
 }
 
-
-.card,
-.card-front {
-
-	font-family: 'Conv_MyFont-Regular', Sans-Serif !important;
-	/* font-size: 21vh !important; */
-
-	/* 2. Сбрасываем любые родительские отступы текста */
-	text-indent: 0 !important;
-	letter-spacing: normal !important;
-
-	/* 3. Включаем идеальное центрирование через Flexbox */
-	display: inline-flex !important;
-	justify-content: center;
-	align-items: center;
-	cursor: pointer;
-}
-
-.card-front {
-	/* font-family: 'Conv_MyFont-Regular', Sans-Serif; */
-	background-color: white;
-	font-size: 21vh;
-	color: #000000C8;
-	cursor: pointer;
-	box-shadow: 2px 0px 5px #000000A8, -2px 0px 3px #000000A8;
-
-	display: inline-block;
-	margin: 0 3%;
-
-	/* display: inline-flex;
-	justify-content: center;
-	align-items: center; */
-	padding-top: 2vh;
-}
-
 .card-front:hover {
 	z-index: 100;
 }
 
-.white {
-	color: #a2a7699b;
-}
-
-
-
 /* - - - К А Р Т А - - - */
 /* ====================================================== */
 
-/* 
-.p-card {
-	display: inline-block;
-	margin-top: 4vh;
-	margin-left: -2vh;
-} */
+
+/* __________________________________________________________________ */
+/* - - - Б О Т Ы - - - */
 
 .bot::before {
 	/* или .bot:before */
@@ -126,14 +89,20 @@ body {
 	position: absolute;
 }
 
-
-
 .bot {
 	all: unset;
 	height: 14vh;
 	scale: 0.45;
 	translate: -2.4vw -3vh;
 }
+
+.white {
+	color: #a2a7699b;
+}
+
+/* - - - Б О Т Ы - - - */
+/* ======================================================================= */
+
 
 .message {
 	display: block;
@@ -152,6 +121,7 @@ body {
 	z-index: 999;
 }
 
+/* _______ К Н О П К И ____________________________________________ */
 button {
 	margin: 5px;
 	padding: 0 5px;
@@ -172,6 +142,8 @@ button {
 	/* Полупрозрачный фон */
 	z-index: 1000;
 }
+
+/* ======== К Н О П К И ====================================== */
 
 /* ЗОНА ИГРОКА (КАРТЫ И СТАТУС) */
 .player {
@@ -237,31 +209,16 @@ button {
 }
 
 #app {
-	/* Включаем флекс-бокс по вертикали */
 	display: flex;
 	flex-direction: column;
-
-	/* Распределяем элементы: равные промежутки МЕЖДУ блоками.
-       Банк прижмется к верху, кнопки к низу, а боты, стол и карты игрока
-       равномерно займут всё пространство по центру. */
 	justify-content: space-around;
-
-	/* Выравниваем все блоки по центру горизонтали */
 	align-items: center;
-
-	/* Растягиваем контейнер строго на всю высоту видимого экрана смартфона */
 	min-height: 100vh;
-	/* Современная замена 100vh для мобильных (учитывает высоту адресной строки) */
 	min-height: 100dvh;
-
-	/* Отступы по краям, чтобы элементы не прилипали к границам экрана */
 	padding: 10px 15px;
 	box-sizing: border-box;
-
-	/* Темный покерный фон для всего приложения */
 	background-color: #0f1216;
 	overflow-x: hidden;
-	/* Защита от случайного горизонтального скролла */
 }
 
 
@@ -276,9 +233,7 @@ button {
 	box-sizing: border-box;
 
 	background: radial-gradient(circle, #1e6b3b 0%, #114223 100%);
-
 	border-radius: 90px;
-
 
 	border: 4px solid #a48857;
 	outline: 8px solid #1a1510;
@@ -292,11 +247,9 @@ button {
 	justify-content: center;
 	align-items: center;
 	gap: 12px;
-	/* Расстояние между общими картами */
 	position: relative;
 }
 
-/* Эффект выжженного золотого логотипа или надписи "POKER" по центру стола */
 .cards-table::before {
 	content: "P O K E R";
 	position: absolute;
@@ -307,20 +260,10 @@ button {
 	font-size: 3em;
 	font-weight: bold;
 	color: rgba(201, 166, 107, 0.12);
-	/* Очень прозрачный золотой цвет */
 	letter-spacing: 0.2em;
 	pointer-events: none;
-	/* Чтобы текст не мешал кликам */
 	z-index: 1;
-	/* 1. Запрещаем перенос текста на новую строку */
 	white-space: nowrap;
-
-	/* 2. Используем адаптивный размер шрифта (4% от ширины экрана), 
-	   но не больше исходных 2em, чтобы текст не стал огромным на десктопе */
-	/* font-size: min(4vw, 2em); */
-
-	/* 3. Уменьшаем межбуквенный интервал для мобилок, 
-	   чтобы буквы не разъезжались слишком сильно */
 	letter-spacing: 0.15em;
 	z-index: 0;
 }
