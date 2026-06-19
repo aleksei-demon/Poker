@@ -133,13 +133,11 @@ button {
 	bottom: 0;
 	left: 0;
 	right: 0;
-	/* центрируем кнопки */
 	display: flex;
 	justify-content: center;
 	gap: 10px;
 	padding: 9px;
 	background-color: rgba(0, 0, 0, 0.8);
-	/* Полупрозрачный фон */
 	z-index: 1000;
 }
 
@@ -148,16 +146,15 @@ button {
 /* ЗОНА ИГРОКА (КАРТЫ И СТАТУС) */
 .player {
 	/* Размещение на экране */
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
 	gap: 10px;
-	/* Отступы, чтобы отделиться от зеленого стола */
 	width: 100%;
 	max-width: 400px;
 	box-sizing: border-box;
-	/* Небольшой запас снизу, чтобы карты не перекрывались кнопками */
 	padding-bottom: 12vh;
 }
 
@@ -288,19 +285,16 @@ button {
 .bots-section {
 	display: flex;
 	justify-content: center;
-	/* Центрируем ботов по горизонтали */
 	align-items: center;
 	gap: 20px;
-	/* Расстояние между карточками ботов */
 	margin-top: 45px;
-
-	/* Отступ сверху, чтобы боты не залезли под банк */
 	width: 100%;
 	box-sizing: border-box;
 }
 
 /* 2. КАРТОЧКА МЕСТА БОТА */
 .bot-place {
+	position: relative;
 	height: 25vh;
 	white-space: nowrap;
 	flex: 1;
@@ -315,7 +309,6 @@ button {
 	text-align: center;
 	box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
 	transition: all 0.3s ease;
-
 
 	display: flex;
 	flex-direction: column;
@@ -342,8 +335,8 @@ button {
 .dealer-chip {
 	display: none;
 	position: absolute;
-	top: -10px;
-	right: -10px;
+	top: 5px;
+	right: 5px;
 	width: 24px;
 	height: 24px;
 	background: #ffffff;
@@ -413,11 +406,8 @@ button {
 /* Общие базовые стили для ВСЕХ кнопок */
 .button-panel button {
 	flex: 1;
-	/* Кнопки будут одинаковой ширины */
 	max-width: 140px;
-	/* Но не шире 140px, чтобы не растягивались на весь экран */
 	height: 44px;
-
 	font-family: 'Segoe UI', Roboto, sans-serif;
 	font-size: 14px;
 	font-weight: 700;
@@ -428,16 +418,11 @@ button {
 
 	border: none;
 	border-radius: 6px;
-	/* Аккуратное скругление углов */
 	cursor: pointer;
 	transition: all 0.2s ease;
-	/* Плавная анимация при наведении */
-
-	/* Внутренняя тень для объема */
 	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
-/* Эффект при наведении (hover) на любую кнопку */
 .button-panel button:hover {
 	transform: translateY(-2px);
 	/* Кнопка слегка приподнимается */
@@ -446,7 +431,6 @@ button {
 	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 4px 10px rgba(0, 0, 0, 0.4);
 }
 
-/* Эффект при нажатии (active) */
 .button-panel button:active {
 	transform: translateY(1px);
 	/* Кнопка «вдавливается» */
@@ -454,7 +438,6 @@ button {
 	box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
-/* --- УНИКАЛЬНЫЕ ЦВЕТА ДЛЯ КАЖДОЙ КНОПКИ --- */
 
 /* ПАСС (Сдержанный красный/бордовый — выход из игры) */
 .btn-fold {
@@ -590,28 +573,12 @@ button {
 		white-space: nowrap;
 	}
 
-	/* #board .card-front,
-	#board .card-back {
-		margin-left: -10%;
-		translate: 5%;
-	} */
-
-
-
-
-
-
-
-
 	#board {
 		display: grid !important;
 		/* Центрируем саму сетку на столе */
 		justify-content: center;
 		align-items: center;
 
-		/* МАГИЯ ГРИДОВ: Создаем 5 колонок. 
-		   Ширина каждой колонки на широком экране — 7vw (примерная ширина карты).
-		   Но при сужении экрана они могут сжиматься вплоть до 2vw, заставляя карты плавно наезжать друг на друга! */
 		grid-template-columns: repeat(5, minmax(5vw, 22vw));
 
 		/* Ограничиваем максимальную ширину блока, чтобы веер не растягивался шире сукна */
@@ -621,11 +588,6 @@ button {
 	}
 
 
-	/* Самую первую карту на столе не сдвигаем влево, чтобы не ломать центровку всего ряда */
-	/* #board .card:first-child {
-		margin-left: 0 !important;
-		translate: 0 !important;
-	} */
 
 
 

@@ -91,24 +91,9 @@ document.body.appendChild(container);
 // - - - - -И Н Т Е Р Ф Е Й С  - - - 
 //===================================================================================================
 
+
 //_______________________________________________________________
 // - - - Р Е Н Д Е Р   К А Р Т  - - -
-
-
-
-// const testerP = ['a', 'j',];
-// const tester = ['a', 'j', 'A', 'E', 'm'];
-// renderCardsTo(tester, '#board');
-// renderCardsTo(testerP, '#cards-p');
-// renderCardsTo(testerP, '#cards-2', true);
-// renderCardsTo(testerP, '#cards-1',);
-// renderCardsTo(testerP, '#cards-3',);
-
-// - - - Р Е Н Д Е Р   К А Р Т  - - -
-//==============================================================================
-
-
-
 
 function renderCardsTo(cardsArray, target_id, isSecret = false) {
     const container = document.querySelector(target_id);
@@ -116,7 +101,7 @@ function renderCardsTo(cardsArray, target_id, isSecret = false) {
 
     cardsArray.forEach(char => {
         const span = document.createElement('span');
-        span.textContent = char; // DOM честно знает и помнит букву карты!
+        span.textContent = char;
 
         // Выставляем базовый класс карты и цвет по регистру
         span.classList.add('card');
@@ -134,7 +119,8 @@ function renderCardsTo(cardsArray, target_id, isSecret = false) {
     });
 }
 
-
+// - - - Р Е Н Д Е Р   К А Р Т  - - -
+//==============================================================================
 
 
 
