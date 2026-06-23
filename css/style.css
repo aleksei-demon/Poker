@@ -168,7 +168,6 @@ button {
 	align-content: center;
 	align-items: center;
 	gap: 24px;
-
 	z-index: 500;
 }
 
@@ -540,6 +539,13 @@ button {
 		gap: 1px;
 	}
 
+	.card-front {
+		display: inline-flex !important;
+		justify-content: center;
+		align-items: flex-start;
+		padding-top: 3.5vh !important;
+	}
+
 	.cards-table {
 		margin-left: -15px;
 		margin-right: -15px;
@@ -571,9 +577,6 @@ button {
 	#board {
 		width: 90%;
 		white-space: nowrap;
-	}
-
-	#board {
 		display: grid !important;
 		/* Центрируем саму сетку на столе */
 		justify-content: center;
