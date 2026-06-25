@@ -160,7 +160,6 @@ button {
 
 /* КОНТЕЙНЕР ДЛЯ ДВУХ КАРТ ИГРОКА */
 #cards-p {
-	/* scale: 1.5; */
 	width: 90%;
 	display: grid;
 	grid-auto-flow: column;
@@ -266,9 +265,8 @@ button {
 
 /* ЗАГОТОВКА ПОД БУДУЩИЕ КАРТЫ СТОЛА (когда они появятся) */
 .cards-table .card {
-	scale: 0.5;
+	scale: 0.6;
 	background-color: #ffffff;
-	border-radius: 6px;
 	z-index: 2;
 	/* Карты ложатся строго поверх логотипа */
 	transition: transform 0.2s ease;
@@ -506,7 +504,7 @@ button {
 #p-balance {
 	font-size: 16px;
 	font-weight: 700;
-	padding: 2px 8px;
+	padding: 3px 8px;
 	border-radius: 4px;
 }
 
@@ -562,8 +560,8 @@ button {
 
 	.bot .card-front,
 	.bot .card-back {
-		margin-left: -36%;
-		translate: 15%;
+		margin-left: -6vh;
+		translate: 5vh;
 	}
 
 	.bot-place {
@@ -575,19 +573,16 @@ button {
 	}
 
 	#board {
-		width: 90%;
 		white-space: nowrap;
 		display: grid !important;
 		/* Центрируем саму сетку на столе */
 		justify-content: center;
 		align-items: center;
-
 		grid-template-columns: repeat(5, minmax(5vw, 22vw));
-
 		/* Ограничиваем максимальную ширину блока, чтобы веер не растягивался шире сукна */
 		max-width: 75vw;
 		margin: 0 auto;
-		translate: -5vh;
+		translate: -7vh;
 	}
 
 

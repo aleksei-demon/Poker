@@ -23,6 +23,14 @@ function tasov() {
 tasov();
 //-----tasovka-------------------------------------------
 
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM дерево полностью построено');
+    runTestDistribution();
+});
+
+
+
+
 
 //=========================================================
 //================== ⇓ М А Ш И Н А ⇓ ↓↓↓↓==========================
@@ -136,11 +144,7 @@ function runTestDistribution() {
 
 
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Ваш код выполнится сразу после построения DOM
-    console.log('DOM дерево полностью построено');
-    runTestDistribution();
-});
+
 
 
 
