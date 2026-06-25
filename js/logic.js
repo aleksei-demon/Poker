@@ -23,13 +23,14 @@ function tasov() {
 tasov();
 //-----tasovka-------------------------------------------
 
+//--------- З А П У С К -------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM дерево полностью построено');
     startNewHand();
 });
+//----- запуск -------------------------------------------
 
-
-// Функция раздачи конкретного количества карт в конкретное место
+//  раздача конкретного количества карт в конкретное место
 function dealCards(deck, count, targetId, isSecret = false) {
     const cardsToGive = [];
 
@@ -59,12 +60,11 @@ let players = [
 // Переменная для хранения текущего дилера (индекс в массиве players: 0 - Чел, 1 - Андрей...)
 let CURRENT_DEALER = 0;
 
-// Главная функция запуска настоящего раунда 
+//  запуск раунда 
 function startNewHand() {
     console.log("=== НАЧАЛО НАСТОЯЩЕЙ РАЗДАЧИ ===");
-
-    // 1. Очищаем DOM-контейнеры от старых карт
-    // Ищем точечно те div/p, куда рендерятся карты
+    showMessage_("Новая раздача.", 6500);
+    // 1. Очищаем DOM-контейнеры от старых карт   
     document.querySelectorAll('#board, #cards-1, #cards-2, #cards-3, #cards-p').forEach(el => el.innerHTML = '');
 
     // 2. Полный сброс банка и ставок в движке
@@ -80,7 +80,7 @@ function startNewHand() {
     updateDealerChipsUI();
 
     // 5. Автоматический сбор блайндов
-    // В покере малый блайнд ставит следующий после дилера, а большой — за ним.
+    //  малый блайнд ставит следующий после дилера, а большой — за ним.
     const sbPlayerIndex = (CURRENT_DEALER + 1) % players.length;
     const bbPlayerIndex = (CURRENT_DEALER + 2) % players.length;
 
@@ -91,16 +91,15 @@ function startNewHand() {
     const bankEl = document.querySelector('#bank');
     if (bankEl) bankEl.textContent = ` ${PokerEngine.gameState.pot} $ `;
 
-    // 6. НАСТОЯЩАЯ РАЗДАЧА КАРТ (физическое уменьшение колоды KOLODA)
+    //  РАЗДАЧА КАРТ 
     // Ботам отдаем карты "в закрытую" (true) — вешается класс .card-back
     dealCards(KOLODA, 2, '#cards-1', true); // Андрей
     dealCards(KOLODA, 2, '#cards-2', true); // Ветал
     dealCards(KOLODA, 2, '#cards-3', true); // 404
 
-    // Живому игроку сдаем карты "в открытую" (false) — вешается класс .card-front
     dealCards(KOLODA, 2, '#cards-p', false); // Чел
 
-    console.log(`Раздача завершена. Остаток карт в колоде: ${KOLODA.length}`); // Ровно 44 карты
+    console.log(`Раздача завершена. Остаток карт в колоде: ${KOLODA.length}`);
 }
 
 // Функция автоматического списания слепых ставок (блайндов)
@@ -126,7 +125,7 @@ function makeAutomaticBet(playerObj, amount) {
     console.log(`[Блайнды]: ${playerObj.name} внес ${actualBet}$. Оставшийся бюджет: ${playerObj.budget}$`);
 }
 
-// Вспомогательная функция для отображения фишки дилера "D"
+// функция для отображения фишки дилера "D"
 function updateDealerChipsUI() {
     // Сначала скрываем ВСЕ фишки "D" на столе
     document.querySelectorAll('.dealer-chip').forEach(el => el.style.display = 'none');
