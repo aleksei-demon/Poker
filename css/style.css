@@ -266,7 +266,6 @@ button {
 /* ЗАГОТОВКА ПОД БУДУЩИЕ КАРТЫ СТОЛА (когда они появятся) */
 .cards-table .card {
 	scale: 0.6;
-	background-color: #ffffff;
 	z-index: 2;
 	/* Карты ложатся строго поверх логотипа */
 	transition: transform 0.2s ease;

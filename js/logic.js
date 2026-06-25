@@ -25,12 +25,130 @@ tasov();
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM дерево полностью построено');
-    runTestDistribution();
+    startNewHand();
 });
 
 
+// Функция раздачи конкретного количества карт в конкретное место
+function dealCards(deck, count, targetId, isSecret = false) {
+    const cardsToGive = [];
 
+    for (let i = 0; i < count; i++) {
+        const topCard = deck.pop(); // Отрезаем карту из колоды, уменьшая её
+        if (topCard) {
+            cardsToGive.push(topCard);
+        }
+    }
 
+    // Отправляем отрезанные карты на отрисовку
+    renderCardsTo(cardsToGive, targetId, isSecret);
+}
+
+// Конфигурация игры (блайнды)
+const SMALL_BLIND = 5;
+const BIG_BLIND = 10;
+
+// Структура игроков для управления бюджетом (примерная, адаптируй под свой массив)
+let players = [
+    { id: 'player', name: 'Чел', budget: 100, elementId: '#cards-p' },
+    { id: 'bot-1', name: 'Андрей', budget: 100, elementId: '#cards-1' },
+    { id: 'bot-2', name: 'Ветал', budget: 100, elementId: '#cards-2' },
+    { id: 'bot-3', name: '404', budget: 100, elementId: '#cards-3' }
+];
+
+// Переменная для хранения текущего дилера (индекс в массиве players: 0 - Чел, 1 - Андрей...)
+let CURRENT_DEALER = 0;
+
+// Главная функция запуска настоящего раунда 
+function startNewHand() {
+    console.log("=== НАЧАЛО НАСТОЯЩЕЙ РАЗДАЧИ ===");
+
+    // 1. Очищаем DOM-контейнеры от старых карт
+    // Ищем точечно те div/p, куда рендерятся карты
+    document.querySelectorAll('#board, #cards-1, #cards-2, #cards-3, #cards-p').forEach(el => el.innerHTML = '');
+
+    // 2. Полный сброс банка и ставок в движке
+    PokerEngine.gameState.pot = 0;
+    PokerEngine.gameState.currentBet = 0;
+
+    // 3. Вызываем тасовку
+    tasov();
+    console.log(`Колода заряжена. Карт в наличии: ${KOLODA.length}`);
+
+    // 4. Двигаем фишку дилера по часовой стрелке на следующий раунд
+    CURRENT_DEALER = (CURRENT_DEALER + 1) % players.length;
+    updateDealerChipsUI();
+
+    // 5. Автоматический сбор блайндов
+    // В покере малый блайнд ставит следующий после дилера, а большой — за ним.
+    const sbPlayerIndex = (CURRENT_DEALER + 1) % players.length;
+    const bbPlayerIndex = (CURRENT_DEALER + 2) % players.length;
+
+    makeAutomaticBet(players[sbPlayerIndex], SMALL_BLIND);
+    makeAutomaticBet(players[bbPlayerIndex], BIG_BLIND);
+
+    // Синхронизируем отображение общего банка на сукне
+    const bankEl = document.querySelector('#bank');
+    if (bankEl) bankEl.textContent = ` ${PokerEngine.gameState.pot} $ `;
+
+    // 6. НАСТОЯЩАЯ РАЗДАЧА КАРТ (физическое уменьшение колоды KOLODA)
+    // Ботам отдаем карты "в закрытую" (true) — вешается класс .card-back
+    dealCards(KOLODA, 2, '#cards-1', true); // Андрей
+    dealCards(KOLODA, 2, '#cards-2', true); // Ветал
+    dealCards(KOLODA, 2, '#cards-3', true); // 404
+
+    // Живому игроку сдаем карты "в открытую" (false) — вешается класс .card-front
+    dealCards(KOLODA, 2, '#cards-p', false); // Чел
+
+    console.log(`Раздача завершена. Остаток карт в колоде: ${KOLODA.length}`); // Ровно 44 карты
+}
+
+// Функция автоматического списания слепых ставок (блайндов)
+function makeAutomaticBet(playerObj, amount) {
+    // Определяем, сколько игрок реально может поставить (защита от нехватки денег)
+    const actualBet = Math.min(playerObj.budget, amount);
+
+    playerObj.budget -= actualBet;
+    PokerEngine.gameState.pot += actualBet;
+
+    // Ищем селектор баланса конкретного игрока на основе его структуры
+    let balanceSelector = '#p-balance'; // Для живого игрока по умолчанию
+    if (playerObj.id === 'bot-1') balanceSelector = '#bot-balance-1';
+    if (playerObj.id === 'bot-2') balanceSelector = '#bot-balance-2';
+    if (playerObj.id === 'bot-3') balanceSelector = '#bot-balance-3';
+
+    // Обновляем баланс в интерфейсе
+    const balanceEl = document.querySelector(balanceSelector);
+    if (balanceEl) {
+        balanceEl.textContent = ` ${playerObj.budget}$`;
+    }
+
+    console.log(`[Блайнды]: ${playerObj.name} внес ${actualBet}$. Оставшийся бюджет: ${playerObj.budget}$`);
+}
+
+// Вспомогательная функция для отображения фишки дилера "D"
+function updateDealerChipsUI() {
+    // Сначала скрываем ВСЕ фишки "D" на столе
+    document.querySelectorAll('.dealer-chip').forEach(el => el.style.display = 'none');
+
+    // Находим нужного игрока/бота, у которого сейчас фокус дилера
+    const activeDealer = players[CURRENT_DEALER];
+
+    // Ищем фишку именно внутри контейнера этого игрока
+    let dealerContainerSelector = '#cards-p'; // Для игрока фишка лежит в секции .player, но можно привязаться к родителю
+    if (activeDealer.id === 'bot-1') dealerContainerSelector = '#bot-1';
+    if (activeDealer.id === 'bot-2') dealerContainerSelector = '#bot-2';
+    if (activeDealer.id === 'bot-3') dealerContainerSelector = '#bot-3';
+
+    if (activeDealer.id === 'player') {
+        // У игрока в myFields фишка лежит в .player
+        const pChip = document.querySelector('.player .dealer-chip');
+        if (pChip) pChip.style.display = 'inline-block';
+    } else {
+        const botChip = document.querySelector(`${dealerContainerSelector} .dealer-chip`);
+        if (botChip) botChip.style.display = 'inline-block';
+    }
+}
 
 //=========================================================
 //================== ⇓ М А Ш И Н А ⇓ ↓↓↓↓==========================
@@ -91,14 +209,6 @@ const PokerEngine = {
 
 
 
-
-
-
-
-
-
-
-
 function runBotLogic(botId) {
     const decision = analyzeSituation(botId); // Бот подумал и решил сделать RAISE
 
@@ -108,39 +218,9 @@ function runBotLogic(botId) {
 //-------ПРИМЕР ВЫЗОВА Ф ИГРЫ------------------
 
 
-// Функция раздачи конкретного количества карт в конкретное место
-function dealCards(deck, count, targetId, isSecret = false) {
-    const cardsToGive = [];
 
-    for (let i = 0; i < count; i++) {
-        const topCard = deck.pop(); // Отрезаем карту из колоды, уменьшая её
-        if (topCard) {
-            cardsToGive.push(topCard);
-        }
-    }
 
-    // Отправляем отрезанные карты на отрисовку
-    renderCardsTo(cardsToGive, targetId, isSecret);
-}
 
-// Функция ТЕСТОВОЙ РАЗДАЧИ для настройки твоего интерфейса
-function runTestDistribution() {
-    // 1. Очищаем зоны перед тестом (чтобы карты не дублировались при повторном нажатии)
-    document.querySelectorAll('#board, #cards-p, #cards-1, #cards-2, #cards-3').forEach(el => el.innerHTML = '');
-
-    // 2. Раздаем ботам по 2 карты рубашкой вверх (true)
-    dealCards(KOLODA, 2, '#cards-1', true);
-    dealCards(KOLODA, 2, '#cards-2', true);
-    dealCards(KOLODA, 2, '#cards-3', true);
-
-    // 3. Раздаем живому игроку 2 карты лицом вверх (false)
-    dealCards(KOLODA, 2, '#cards-p', false);
-
-    // 4. Выкладываем на стол (board) сразу 5 карт лицом вверх (false)
-    dealCards(KOLODA, 5, '#board', false);
-
-    console.log(`Тестовая раздача выполнена! Остаток карт в колоде: ${KOLODA.length}`);
-}
 
 
 

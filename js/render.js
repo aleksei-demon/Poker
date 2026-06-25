@@ -45,7 +45,7 @@ const myFields = [
                 id: 'bot-2', class: 'bot-place',
                 children: [
                     { tag: 'div.dealer-chip', innerText: 'D' },
-                    { tag: 'span.white', innerText: 'Витал ' },
+                    { tag: 'span.white', innerText: 'Ветал ' },
                     { tag: 'span#bot-balance-2', innerText: '100$' },
                     { tag: 'div#cards-2.bot', children: [{ tag: 'span' }] },
                 ]
@@ -108,7 +108,7 @@ function renderCardsTo(cardsArray, target_id, isSecret = false) {
         const isRed = char === char.toUpperCase();
         span.dataset.color = isRed ? 'red' : 'black';
 
-        // Вот она, простая и понятная логика смены классов:
+        //  логика смены классов:
         if (isSecret) {
             span.classList.add('card-back');
         } else {
