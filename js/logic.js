@@ -63,7 +63,7 @@ let CURRENT_DEALER = 0;
 //  запуск раунда 
 function startNewHand() {
     console.log("=== НАЧАЛО НАСТОЯЩЕЙ РАЗДАЧИ ===");
-    showMessage_("Новая раздача.", 6500);
+    showMessage_("Новая раздача.", 9500);
     // 1. Очищаем DOM-контейнеры от старых карт   
     document.querySelectorAll('#board, #cards-1, #cards-2, #cards-3, #cards-p').forEach(el => el.innerHTML = '');
 

@@ -106,7 +106,7 @@ body {
 
 .message {
 	display: block;
-	padding: 10px;
+	padding: 16px;
 	border-radius: 25px;
 	color: Olive;
 	text-align: center;
@@ -115,10 +115,14 @@ body {
 	font-weight: 900;
 	position: absolute;
 	top: 50%;
-	left: 5%;
+	left: 50%;
+	transform: translate(-50%, -55%);
+	z-index: 999;
+	white-space: nowrap;
 	backdrop-filter: blur(6px);
 	opacity: 0;
 	z-index: 999;
+	pointer-events: none;
 }
 
 /* _______ К Н О П К И ____________________________________________ */
@@ -223,20 +227,15 @@ button {
 	max-width: 700px;
 	height: 180px;
 	margin: 30px auto;
-
 	padding: 20px;
 	box-sizing: border-box;
-
 	background: radial-gradient(circle, #1e6b3b 0%, #114223 100%);
 	border-radius: 90px;
-
 	border: 4px solid #a48857;
 	outline: 8px solid #1a1510;
-
 	box-shadow:
 		inset 0 0 40px rgba(0, 0, 0, 0.7),
 		0 15px 35px rgba(0, 0, 0, 0.8);
-
 	/* Флекс-сетка для будущего размещения 5 карт (Флоп, Терн, Ривер) */
 	display: flex;
 	justify-content: center;

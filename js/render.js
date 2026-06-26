@@ -124,64 +124,10 @@ function renderCardsTo(cardsArray, target_id, isSecret = false) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //__________________________________________________________________________________________________________
 // - - - Ф А В И К О Н - - - 
 function Favicon() {
-    let iconContent = '';
-
-    iconContent = `
+    let iconContent = `
             <path d="M 50 15 C 75 40, 90 60, 75 75 
             S 55 70, 50 70 
             S 25 70, 25 75 
