@@ -13,6 +13,27 @@ body {
 	overflow: hidden;
 }
 
+button {
+	user-select: none;
+}
+
+/* Отключаем любые эффекты наведения и анимации для заблокированных кнопок */
+.button-panel button:disabled,
+.button-panel button[disabled] {
+	opacity: 0.4 !important;
+	/* Делаем кнопку сильно прозрачной/блеклой */
+	cursor: not-allowed !important;
+	/* Меняем курсор на знак "запрещено" */
+	transform: none !important;
+	/* Убираем сдвиги/увеличения, если они были */
+	box-shadow: none !important;
+	/* Выключаем свечение и тени */
+	pointer-events: none !important;
+	/* Полностью запрещаем браузеру обрабатывать наведение (убьет ховеры) */
+	filter: grayscale(80%) !important;
+	/* Дополнительно вымываем цвета в серый спектр */
+}
+
 #board {
 	width: 70%;
 	white-space: nowrap;

@@ -74,12 +74,12 @@ const myFields = [
         tag: 'section',
         class: 'button-panel',
         children: [
-            { tag: 'button.btn-fold', onclick: () => makeAction('fold'), innerText: 'Пасс' },
-            { tag: 'button.btn-check', onclick: () => makeAction('check'), innerText: 'Чек' },
-            { tag: 'button.btn-call', onclick: () => makeAction('call'), innerText: 'Колл' },
-            { tag: 'button.btn-raise', onclick: () => makeAction('raise'), innerText: 'Рейз' },
-            { tag: 'button#all-in.btn-all-in', onclick: () => makeAction('all-in'), innerText: 'Ва-банк' },
-            { tag: 'button.btn-hod', onclick: () => makeAction('hod'), innerText: 'Ход' },
+            { tag: 'button#btn-fold.btn-fold', attr: { type: "button" }, onclick: () => makeAction('fold'), innerText: 'Пасс' },
+            { tag: 'button#btn-check.btn-check', attr: { type: "button" }, onclick: () => makeAction('check'), innerText: 'Чек' },
+            { tag: 'button#btn-call.btn-call', attr: { type: "button" }, onclick: () => makeAction('call'), innerText: 'Колл' },
+            { tag: 'button#btn-raise.btn-raise', attr: { type: "button" }, onclick: () => makeAction('raise'), innerText: 'Рейз' },
+            { tag: 'button#btn-allin.btn-all-in', attr: { type: "button" }, onclick: () => makeAction('all-in'), innerText: 'Ва-банк' },
+            { tag: 'button#btn-hod.btn-hod', attr: { type: "button" }, onclick: () => makeAction('hod'), innerText: 'Ход' },
         ]
     },
 ];

@@ -4,10 +4,18 @@
 
 //-------------------------S h o w   M e s s a g e-------------------------------------
 
-function showMessage_(message = '', timeShow = 900) {
 
+let messageOpacityInterval;
+
+function showMessage_(message = '', timeShow = 900) {
     let table = document.querySelector('.cards-table');
     if (!table) return;
+
+    let oldMessage = document.getElementById('p_message');
+    if (oldMessage) {
+        clearInterval(messageOpacityInterval);
+        oldMessage.remove();
+    }
 
     let p = document.createElement('p');
     p.classList.add('message');
@@ -20,9 +28,9 @@ function showMessage_(message = '', timeShow = 900) {
     let stepTransparent = 0;
     let down = false;
 
-    let opacityInterval = setInterval(() => {
+    messageOpacityInterval = setInterval(() => {
         if (!p_message) {
-            clearInterval(opacityInterval);
+            clearInterval(messageOpacityInterval);
             return;
         }
         if (stepTransparent < 100 && down == false) {
@@ -37,12 +45,14 @@ function showMessage_(message = '', timeShow = 900) {
     }, (timeShow / 200));
 
     setTimeout(() => {
-        clearInterval(opacityInterval);
+        // Удаляем элемент, только если этот конкретный интервал всё еще активен
         if (p_message && p_message.parentNode === table) {
+            clearInterval(messageOpacityInterval);
             table.removeChild(p_message);
         }
     }, timeShow);
 }
+
 
 //-------------------------Show message-------------------------------------
 
