@@ -63,6 +63,15 @@ button {
 	justify-content: center;
 	align-items: flex-start;
 	padding-top: 3.5vh !important;
+
+	transition: transform 0.4s ease-in-out;
+	/* Время сжатия до 90 градусов (в профиль) */
+	transform-style: flat;
+	/* Никакого тяжелого 3D, работаем в плоскости стола */
+}
+
+.card.edge-on {
+	transform: scaleX(0);
 }
 
 .card-back {
@@ -96,6 +105,10 @@ button {
 }
 
 /* - - - К А Р Т А - - - */
+/* ---  3D-ФЛИП --- */
+
+/* --- СВЕРХНОВАЯ МАГИЯ 3D-ФЛИПА (СТАБИЛЬНАЯ ВЕРСИЯ) --- */
+
 /* ====================================================== */
 
 
@@ -125,11 +138,13 @@ button {
 /* ======================================================================= */
 
 
+
 .message {
 	display: block;
-	padding: 16px;
+	padding: 18px 25px;
 	border-radius: 25px;
 	color: Olive;
+	/* Стандартный цвет */
 	text-align: center;
 	font-size: 3em;
 	font-family: verdana;
@@ -139,11 +154,55 @@ button {
 	left: 50%;
 	transform: translate(-50%, -55%);
 	z-index: 999;
-	white-space: nowrap;
+	/* white-space: nowrap; */
 	backdrop-filter: blur(6px);
-	opacity: 0;
-	z-index: 999;
 	pointer-events: none;
+
+	opacity: 0;
+	/* Имя анимации, длительность (задается из JS) и тип сглаживания */
+	animation: fadeMessage var(--show-time, 900ms) ease-in-out forwards;
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+
+	/* Маска, которая мягко размывает ВСЕ четыре стороны (периметр) */
+	mask-image:
+		linear-gradient(to right, transparent, black 15%, black 85%, transparent),
+		linear-gradient(to bottom, transparent, black 20%, black 80%, transparent);
+	mask-composite: intersect;
+
+	/* Поддержка для старых версий Safari/Chrome */
+	-webkit-mask-image:
+		linear-gradient(to right, transparent, black 15%, black 85%, transparent),
+		linear-gradient(to bottom, transparent, black 20%, black 80%, transparent);
+	-webkit-mask-composite: source-in;
+}
+
+/* Класс для приглушенного красного тона */
+.message.error {
+	color: #CD5C5C;
+}
+
+/* Красивая анимация: быстрое появление, пауза, плавное исчезновение */
+@keyframes fadeMessage {
+	0% {
+		opacity: 0;
+	}
+
+	15% {
+		opacity: 1;
+	}
+
+	/* Быстро появляемся за 15% времени */
+	75% {
+		opacity: 1;
+	}
+
+	/* Держимся на экране до 75% времени */
+	100% {
+		opacity: 0;
+	}
+
+	/* Плавно исчезаем к концу */
 }
 
 /* _______ К Н О П К И ____________________________________________ */
@@ -365,6 +424,10 @@ button {
 	line-height: 20px;
 	text-align: center;
 	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+.player .dealer-chip {
+	transform: scale(2);
 }
 
 /* Показываем фишку только у того, у кого активен класс дилера */
