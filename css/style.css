@@ -428,6 +428,7 @@ button {
 
 .player .dealer-chip {
 	transform: scale(2);
+	top: -15px;
 }
 
 /* Показываем фишку только у того, у кого активен класс дилера */
