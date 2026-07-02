@@ -50,17 +50,3 @@ function showMessage_(message = '', timeShow = 900, red = false) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
