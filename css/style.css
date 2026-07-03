@@ -428,7 +428,6 @@ button {
 
 .player .dealer-chip {
 	transform: scale(2);
-	top: -15px;
 }
 
 /* Показываем фишку только у того, у кого активен класс дилера */
@@ -613,6 +612,57 @@ button {
 	font-weight: 300;
 }
 
+.eliminated {
+	opacity: 0.25 !important;
+	pointer-events: none;
+	filter: grayscale(100%);
+	transition: all 0.5s ease;
+}
+
+.eliminated::after {
+	content: "ВЫБЫЛ";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%) rotate(-15deg);
+	background: #ff3333;
+	color: white;
+	padding: 4px 12px;
+	font-weight: bold;
+	font-size: 14px;
+	border-radius: 4px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+	z-index: 10;
+}
+
+/* Специальный адаптивный контейнер для игрока, когда он выбывает */
+.player.eliminated {
+	position: relative;
+	opacity: 0.3 !important;
+	filter: grayscale(100%);
+	pointer-events: none;
+}
+
+/* Крупная, отцентрированная плашка поверх карт игрока */
+.player.eliminated::after {
+	content: "ВЫ ВЫБЫЛИ";
+	position: absolute;
+	top: 35%;
+	/* Чуть выше кнопок, чтобы перекрывать именно карты */
+	left: 50%;
+	transform: translate(-50%, -50%) rotate(-8deg);
+	background: #e53e3e;
+	color: white;
+	padding: 10px 28px;
+	font-weight: bold;
+	font-size: 22px;
+	letter-spacing: 2px;
+	border-radius: 8px;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+	z-index: 9999;
+	white-space: nowrap;
+	border: 2px solid #fff;
+}
 
 @media screen and (orientation: portrait) {
 
@@ -668,6 +718,9 @@ button {
 		translate: -7vh;
 	}
 
+	.player .dealer-chip {
+		top: -18px;
+	}
 
 
 

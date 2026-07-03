@@ -161,22 +161,19 @@ function makeAutomaticBet(playerObj, amount) {
 }
 
 function updateDealerChipsUI() {
-    document.querySelectorAll('.dealer-chip').forEach(el => el.style.display = 'none');
+    // Сначала прячем фишку дилера у всех игроков
+    players.forEach(p => {
+        let selector = p.id === 'player' ? '.player .dealer-chip' : `#${p.id} .dealer-chip`;
+        const chip = document.querySelector(selector);
+        if (chip) chip.style.display = 'none';
+    });
 
-    const activeDealer = players[CURRENT_DEALER];
-    if (!activeDealer) return; // Защита от сбоя индекса дилера
-
-    let dealerContainerSelector = '#cards-p';
-    if (activeDealer.id === 'bot-1') dealerContainerSelector = '#bot-1';
-    if (activeDealer.id === 'bot-2') dealerContainerSelector = '#bot-2';
-    if (activeDealer.id === 'bot-3') dealerContainerSelector = '#bot-3';
-
-    if (activeDealer.id === 'player') {
-        const pChip = document.querySelector('.player .dealer-chip');
-        if (pChip) pChip.style.display = 'inline-block';
-    } else {
-        const botChip = document.querySelector(`${dealerContainerSelector} .dealer-chip`);
-        if (botChip) botChip.style.display = 'inline-block';
+    // Показываем фишку ТОЛЬКО у текущего живого дилера
+    const currentDealerPlayer = players[CURRENT_DEALER];
+    if (currentDealerPlayer && currentDealerPlayer.budget > 0) {
+        let activeSelector = currentDealerPlayer.id === 'player' ? '.player .dealer-chip' : `#${currentDealerPlayer.id} .dealer-chip`;
+        const activeChip = document.querySelector(activeSelector);
+        if (activeChip) activeChip.style.display = 'block';
     }
 }
 

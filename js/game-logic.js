@@ -13,7 +13,27 @@ let players = [
     { id: 'bot-3', name: '404', budget: 100, elementId: '#cards-3' }
 ];
 
+// Внутри PokerEngine.gameState или как константу сверху файла:
+const TOURNAMENT_STRUCTURE = [
+    { level: 1, sb: 5, bb: 10 },
+    { level: 2, sb: 10, bb: 20 },
+    { level: 3, sb: 15, bb: 30 },
+    { level: 4, sb: 25, bb: 50 },
+    { level: 5, sb: 50, bb: 100 } // На этом уровне со стеком 100$ начнется жесткое месиво
+];
+
 let CURRENT_DEALER = 0;
+
+function getNextActivePlayerIndex(startIndex) {
+    let index = startIndex;
+    for (let i = 0; i < players.length; i++) {
+        index = (index + 1) % players.length;
+        if (players[index].budget > 0) {
+            return index;
+        }
+    }
+    return startIndex;
+}
 
 // 2.==== Д В И Ж О К   И Г Р Ы ===============================
 const PokerEngine = {
@@ -31,8 +51,14 @@ const PokerEngine = {
         botTimer: null,
     },
 
+    // Добавь этот геттер внутрь объекта или класса PokerEngine для удобства
+    get activePlayers() {
+        // Возвращает только тех, кто в игре (не выбыл по деньгам и не сбросил карты в этой раздаче)
+        return players.filter(p => p.budget > 0 && !this.gameState.foldedPlayers.includes(p.id));
+    },
+
     initPreflop() {
-        // Сброс состояния для новой раздачи
+        // 1. Сброс состояния для новой раздачи
         this.gameState.currentBet = BIG_BLIND;
         this.gameState.foldedPlayers = [];
         this.gameState.roundBets = { 'player': 0, 'bot-1': 0, 'bot-2': 0, 'bot-3': 0 };
@@ -41,54 +67,53 @@ const PokerEngine = {
         this.gameState.actedPlayers = [];
         this.gameState.board = [];
 
-        // Автоматически отправляем в фолд банкротов ДО расчета блайндов
+        // 2. Автоматически отправляем в фолд выбывших игроков ДО расчета блайндов
         players.forEach(p => {
             if (p.budget <= 0) {
                 if (!this.gameState.foldedPlayers.includes(p.id)) {
                     this.gameState.foldedPlayers.push(p.id);
                 }
                 this.syncFoldUI(p.id);
-                console.log(`[ENGINE]: Игрок ${p.name} банкрот и пропускает раздачу.`);
             }
         });
 
-        // Рассчитываем блайнды от текущего дилера (с учетом живых игроков)
-        const sbPlayerIndex = (CURRENT_DEALER + 1) % players.length;
-        const bbPlayerIndex = (CURRENT_DEALER + 2) % players.length;
+        // 3. Рассчитываем блайнды от текущего дилера через твою функцию поиска живых игроков
+        const sbPlayerIndex = getNextActivePlayerIndex(CURRENT_DEALER);
+        const bbPlayerIndex = getNextActivePlayerIndex(sbPlayerIndex);
 
         const sbPlayer = players[sbPlayerIndex];
         const bbPlayer = players[bbPlayerIndex];
 
-        // Списываем фишки (если у игрока меньше блайнда — он автоматом идет в All-In)
+        // 4. Списываем фишки (защита от нехватки баланса на блайнд)
         const sbActual = Math.min(sbPlayer.budget, SMALL_BLIND);
         const bbActual = Math.min(bbPlayer.budget, BIG_BLIND);
 
         makeAutomaticBet(sbPlayer, sbActual);
         makeAutomaticBet(bbPlayer, bbActual);
 
-        // Фиксируем в стейте
+        // Фиксируем ставки в стейте движка
         this.gameState.roundBets[sbPlayer.id] = sbActual;
         this.gameState.roundBets[bbPlayer.id] = bbActual;
         this.gameState.totalBets[sbPlayer.id] = sbActual;
         this.gameState.totalBets[bbPlayer.id] = bbActual;
 
-        // Если блайнд стал олл-ином, помечаем, что они походили
+        // Если блайнд вынудил игрока зайти Ва-Банк, помечаем его как сходившего
         if (sbPlayer.budget === 0) this.gameState.actedPlayers.push(sbPlayer.id);
         if (bbPlayer.budget === 0) this.gameState.actedPlayers.push(bbPlayer.id);
 
-        // Обновляем UI банка
+        // 5. Синхронизируем UI банка стола
         const bankEl = document.querySelector('#bank');
-        if (bankEl) { bankEl.textContent = ` ${this.gameState.pot} $ `; }
-
-        // Первым на префлопе ходит UTG (следующий после ББ)
-        this.gameState.activePlayerIndex = (CURRENT_DEALER + 3) % players.length;
-
-        // Корректируем, если выбранный игрок уже в фолде/банкрот
-        while (this.gameState.foldedPlayers.includes(this.getCurrentPlayerId())) {
-            this.gameState.activePlayerIndex = (this.gameState.activePlayerIndex + 1) % players.length;
+        if (bankEl) {
+            bankEl.textContent = ` ${this.gameState.pot} $ `;
         }
 
+        // 6. Первым на префлопе ходит UTG (игрок, следующий ЗА Большим Блайндом)
+        // Используем твою функцию, чтобы гарантированно выбрать живого игрока!
+        this.gameState.activePlayerIndex = getNextActivePlayerIndex(bbPlayerIndex);
+
         console.log(`[ENGINE]: Торги начались. Первым ходит: ${players[this.gameState.activePlayerIndex].name}`);
+
+        // Передаем управление циклу ходов
         this.startWaitingForAction();
     },
 
@@ -436,59 +461,49 @@ const PokerEngine = {
     },
 
     checkTableBankruptcy() {
-        // Находим игроков, у которых остались деньги
-        const solventPlayers = players.filter(p => p.budget > 0);
+        let activeCount = 0;
 
-        // Ситуация 1: У всех, кроме одного игрока, кончились деньги (Игрок всех победил)
-        const activeBots = players.filter(p => p.id !== 'player');
-        const allBotsAreBroke = activeBots.every(b => b.budget <= 0);
+        players.forEach(p => {
+            let selector = p.id === 'player' ? '.player' : `#${p.id}`;
+            const el = document.querySelector(selector);
 
-        // Ситуация 2: У самого игрока 0$ (или вообще остался только один бот с деньгами, как на скрине)
-        const playerIsBroke = players.find(p => p.id === 'player').budget <= 0;
-        const totalBrokeCount = players.filter(p => p.budget <= 0).length;
+            if (p.budget <= 0) {
+                // Игрок действительно банкрот, только если его баланс 0
+                if (el && !el.classList.contains('eliminated')) {
+                    el.classList.add('eliminated');
+                    console.log(`[TOURNAMENT]: Игрок ${p.name} официально покинул турнир.`);
+                }
+            } else {
+                activeCount++;
+                if (el) el.classList.remove('eliminated'); // На всякий случай снимаем класс с живых
+            }
+        });
 
-        // Если за столом остался всего 1 игрок с деньгами (или меньше, вдруг ничья)
-        if (solventPlayers.length <= 1 || allBotsAreBroke || playerIsBroke) {
+        // Если остался только 1 живой участник с фишками
+        if (activeCount === 1) {
+            const winner = players.find(p => p.budget > 0);
             if (this.gameState.botTimer) {
                 clearTimeout(this.gameState.botTimer);
                 this.gameState.botTimer = null;
             }
-
-            // Формируем текст сообщения в зависимости от того, кто пострадал
-            let notificationText = "🎉 Вы подчистили стол! Боты закупают новые фишки...";
-            if (playerIsBroke) {
-                notificationText = "💸 Вы проигрались дотла! Оформляем авто-докупку фишек для всех банкротов...";
-            } else if (solventPlayers.length <= 1) {
-                const winnerName = solventPlayers.length === 1 ? solventPlayers[0].name : "Лидер";
-                notificationText = `Игрок ${winnerName} остался один! Стол делает докупку фишек...`;
-            }
-
-            showMessage_(notificationText, 5000);
-
-            // Через 5.5 секунд восстанавливаем балансы всем, у кого 0$ (или меньше)
-            setTimeout(() => {
-                players.forEach(p => {
-                    if (p.budget <= 0) {
-                        p.budget = 100; // Стандартный стек закупки
-                        console.log(`[REBUY]: Игрок ${p.name} докупил фишек до 100$.`);
-                    }
-                });
-
-                // Синхронизируем UI балансов для всех
-                players.forEach(p => this.syncBalancesUI(p));
-
-                // Сбрасываем дилера на нулевую позицию, чтобы начать честный новый круг
-                CURRENT_DEALER = 0;
-                if (typeof updateDealerChipsUI === 'function') updateDealerChipsUI();
-
-                // Запускаем чистую новую раздачу
-                startNewHand();
-            }, 5500);
-
-            return true; // Игра временно остановлена на перезапуск
+            showMessage_(`🏆 ТУРНИР ЗАВЕРШЕН! Победитель: ${winner.name}!`, 10000);
+            return true;
         }
 
-        return false; // Все в порядке, продолжаем в обычном режиме
+        // Если сам игрок проиграл все фишки
+        const playerObj = players.find(p => p.id === 'player');
+        if (playerObj && playerObj.budget <= 0) {
+            // Скрываем или блокируем нижние кнопки, чтобы освободить место под плашку
+            const actionPanel = document.querySelector('.action-buttons, .controls'); // укажи свой класс панели
+            if (actionPanel) {
+                actionPanel.style.opacity = '0.1';
+                actionPanel.style.pointerEvents = 'none';
+            }
+            showMessage_("💸 Вы вылетели из турнира! Игра окончена.", 7000);
+            return true;
+        }
+
+        return false;
     },
 
     executeAction(playerId, actionType, amount = 0) {
@@ -802,28 +817,43 @@ document.addEventListener('DOMContentLoaded', () => {
 function startNewHand() {
     console.log("=== ЧИСТКА СТОЛА И ПАМЯТИ ДЛЯ НОВОЙ РАЗДАЧИ ===");
 
-    // 1. Очищаем таймер ботов, предотвращая утечку асинхронных ходов
+    // 1. Очищаем таймер ботов
     if (PokerEngine && PokerEngine.gameState && PokerEngine.gameState.botTimer) {
         clearTimeout(PokerEngine.gameState.botTimer);
         PokerEngine.gameState.botTimer = null;
     }
 
-    // 2. Чистим контейнеры карт в UI и возвращаем им 100% яркость после прошлых фолдов
-    document.querySelectorAll('#board, #cards-1, #cards-2, #cards-3, #cards-p').forEach(el => {
-        el.innerHTML = '';
-        el.style.opacity = '1';
+    // 2. Полностью вычищаем все дочерние узлы DOM во всех контейнерах карт
+    const cardContainers = ['#board', '#cards-1', '#cards-2', '#cards-3', '#cards-p'];
+    cardContainers.forEach(selector => {
+        const el = document.querySelector(selector);
+        if (el) {
+            el.innerHTML = ''; // Стираем все вложенные карты
+            el.style.opacity = '1'; // Возвращаем яркость живому игроку
+        }
     });
 
-    // 3. Обнуляем карманные карты у всех игроков в оперативной памяти
+    // 3. Дополнительная страховка: если карты рендерятся внутри стола с общим классом .card
+    document.querySelectorAll('.card').forEach(card => {
+        // Если это не карты внутри бокса выбывшего игрока, удаляем их
+        if (!card.closest('.eliminated')) {
+            card.remove();
+        }
+    });
+
+    // 4. Обнуляем карманные карты в памяти
     if (typeof players !== 'undefined' && Array.isArray(players)) {
         players.forEach(p => { p.cards = []; });
     }
 
-    // 4. Сброс стейта игры
+    // 5. Сброс состояния игры в движке
     if (PokerEngine && PokerEngine.gameState) {
         PokerEngine.gameState.board = [];
         PokerEngine.gameState.foldedPlayers = [];
         PokerEngine.gameState.pot = 0;
+        PokerEngine.gameState.currentBet = 0;
+        // Очищаем ставки предыдущего раунда у всех игроков
+        PokerEngine.gameState.roundBets = {};
     }
 
     // 5. Показываем уведомление
@@ -835,15 +865,18 @@ function startNewHand() {
     if (typeof tasov === 'function') tasov();
 
     if (typeof players !== 'undefined' && players.length > 0) {
-        CURRENT_DEALER = (CURRENT_DEALER + 1) % players.length;
-        if (typeof updateDealerChipsUI === 'function') updateDealerChipsUI();
+        // Передаем фишку дилера СЛЕДУЮЩЕМУ ЖИВОМУ игроку
+        CURRENT_DEALER = getNextActivePlayerIndex(CURRENT_DEALER);
+
+        // И сразу обновляем отображение фишки на столе
+        if (typeof updateDealerChipsUI === 'function') { updateDealerChipsUI(); }
 
         // 7. Раздаем физические карты (Берем из глобального массива KOLODA)
         if (typeof dealCards === 'function') {
-            dealCards(KOLODA, 2, '#cards-1', true);
-            dealCards(KOLODA, 2, '#cards-2', true);
-            dealCards(KOLODA, 2, '#cards-3', true);
-            dealCards(KOLODA, 2, '#cards-p', false); // Игроку (рубашкой вниз)
+            if (players.find(p => p.id === 'bot-1').budget > 0) dealCards(KOLODA, 2, '#cards-1', true);
+            if (players.find(p => p.id === 'bot-2').budget > 0) dealCards(KOLODA, 2, '#cards-2', true);
+            if (players.find(p => p.id === 'bot-3').budget > 0) dealCards(KOLODA, 2, '#cards-3', true);
+            if (players.find(p => p.id === 'player').budget > 0) dealCards(KOLODA, 2, '#cards-p', false);
         }
 
         // 8. Запускаем префлоп торговлю через движок
@@ -853,9 +886,35 @@ function startNewHand() {
     }
 }
 
+//--- А Д   И   И З Р А И Л Ь --------------------------------------
+function updateTournamentLevel() {
+    if (!PokerEngine.gameState.handsPlayed) {
+        PokerEngine.gameState.handsPlayed = 0;
+        PokerEngine.gameState.currentLevelIdx = 0;
+    }
+
+    PokerEngine.gameState.handsPlayed++;
+    console.log(`[TOURNAMENT]: Раздача #${PokerEngine.gameState.handsPlayed}`);
+
+    // Повышаем уровень каждые 4 раздачи
+    const HANDS_PER_LEVEL = 4;
+    const newLevelIdx = Math.floor((PokerEngine.gameState.handsPlayed - 1) / HANDS_PER_LEVEL);
+
+    // Если перешли на новый уровень и он есть в нашей структуре
+    if (newLevelIdx !== PokerEngine.gameState.currentLevelIdx && newLevelIdx < TOURNAMENT_STRUCTURE.length) {
+        PokerEngine.gameState.currentLevelIdx = newLevelIdx;
+        const currentLevel = TOURNAMENT_STRUCTURE[newLevelIdx];
+
+        // Меняем глобальные блайнды игры
+        SMALL_BLIND = currentLevel.sb;
+        BIG_BLIND = currentLevel.bb;
+
+        console.log(`%c[💥 LEVEL UP]: Блайнды выросли! Новый уровень: ${currentLevel.level}. SB: ${SMALL_BLIND}$, BB: ${BIG_BLIND}$`, "color: #ff3333; font-weight: bold;");
+        showMessage_(`⚠️ Блайнды выросли! Малый: ${SMALL_BLIND}$, Большой: ${BIG_BLIND}$`, 4000);
+    }
+}
 
 
-
-
+//___________ад и израиль ______________________________________________
 
 
