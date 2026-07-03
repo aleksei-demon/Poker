@@ -815,6 +815,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Запуск новой раздачи
 function startNewHand() {
+    // ПЕРВЫМ ДЕЛОМ проверяем, а не закончился ли турнир в прошлой раздаче?
+    if (typeof PokerEngine !== 'undefined' && PokerEngine.checkTableBankruptcy) {
+        const isGameOver = PokerEngine.checkTableBankruptcy();
+        if (isGameOver) {
+            console.log("[TOURNAMENT]: Запуск новой раздачи отменен. Турнир завершен.");
+            return; // МГНОВЕННО КУСАЕМ КОД, новая раздача не начнется!
+        }
+    }
     console.log("=== ЧИСТКА СТОЛА И ПАМЯТИ ДЛЯ НОВОЙ РАЗДАЧИ ===");
 
     // 1. Очищаем таймер ботов
