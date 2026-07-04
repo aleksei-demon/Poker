@@ -47,19 +47,23 @@ function evaluateFiveCards(fiveChars) {
     const valueCounts = {};
     const suitCounts = {};
     cards.forEach(c => {
-        if (c) { // Защита от null-карт
+        if (c) {
             valueCounts[c.value] = (valueCounts[c.value] || 0) + 1;
             suitCounts[c.suit] = (suitCounts[c.suit] || 0) + 1;
         }
     });
 
     const counts = Object.values(valueCounts).sort((a, b) => b - a);
-    const sortedValuesByCount = Object.keys(valueCounts)
-        .map(Number)
-        .sort((a, b) => {
-            if (valueCounts[a] !== valueCounts[b]) return valueCounts[b] - valueCounts[a];
-            return b - a;
-        });
+
+    // ИСПРАВЛЕНИЕ: Для кикеров мы сортируем абсолютно ВСЕ 5 карт, 
+    // но сначала по количеству совпадений, а затем по номиналу.
+    // Это гарантирует, что массив ВСЕГДА состоит из 5 элементов.
+    const sortedValuesForKickers = [...cards].sort((a, b) => {
+        const countA = valueCounts[a.value];
+        const countB = valueCounts[b.value];
+        if (countA !== countB) return countB - countA; // Сначала тройки/пары
+        return b.value - a.value;                      // Потом старшинство карт внутри групп
+    }).map(c => c.value);
 
     const isFlush = Object.values(suitCounts).some(cnt => cnt === 5);
     let isStraight = false;
@@ -67,25 +71,29 @@ function evaluateFiveCards(fiveChars) {
     if (counts.length === 5 && (cards[0].value - cards[4].value === 4)) {
         isStraight = true;
     }
-    // Особый случай: Стрит от Туза до Пятерки (Колесо: А-5-4-3-2)
+    // Особый случай: Стрит от Туза до Пятерки (А-5-4-3-2)
     if (counts.length === 5 && cards[0] && cards[1] && cards[4] && cards[0].value === 12 && cards[1].value === 3 && cards[4].value === 0) {
         isStraight = true;
-        sortedValuesByCount.push(sortedValuesByCount.shift());
+        // Переносим Туз в конец для правильного расчета кикера Стрита
+        const ace = sortedValuesForKickers.shift();
+        sortedValuesForKickers.push(ace);
     }
 
+    // ТЕПЕРЬ СТЕПЕНИ ВСЕГДА СТАБИЛЬНЫ (от 4 до 0)
     let kickerScore = 0;
-    sortedValuesByCount.forEach((val, index) => {
+    sortedValuesForKickers.forEach((val, index) => {
         kickerScore += val * Math.pow(15, 4 - index);
     });
 
-    if (isStraight && isFlush) return { score: 8000000 + kickerScore, name: "Стрит-Флеш" };
-    if (counts[0] === 4) return { score: 7000000 + kickerScore, name: "Каре" };
-    if (counts[0] === 3 && counts[1] === 2) return { score: 6000000 + kickerScore, name: "Фулл-Хаус" };
-    if (isFlush) return { score: 5000000 + kickerScore, name: "Флеш" };
-    if (isStraight) return { score: 4000000 + kickerScore, name: "Стрит" };
-    if (counts[0] === 3) return { score: 3000000 + kickerScore, name: "Сет" };
-    if (counts[0] === 2 && counts[1] === 2) return { score: 2000000 + kickerScore, name: "Две Пары" };
-    if (counts[0] === 2) return { score: 1000000 + kickerScore, name: "Пара" };
+    // Строгие константы базовых очков (умножены на 10, чтобы кикеры гарантированно умещались внутри своего миллиона)
+    if (isStraight && isFlush) return { score: 80000000 + kickerScore, name: "Стрит-Флеш" };
+    if (counts[0] === 4) return { score: 70000000 + kickerScore, name: "Каре" };
+    if (counts[0] === 3 && counts[1] === 2) return { score: 60000000 + kickerScore, name: "Фулл-Хаус" };
+    if (isFlush) return { score: 50000000 + kickerScore, name: "Флеш" };
+    if (isStraight) return { score: 40000000 + kickerScore, name: "Стрит" };
+    if (counts[0] === 3) return { score: 30000000 + kickerScore, name: "Сет" };
+    if (counts[0] === 2 && counts[1] === 2) return { score: 20000000 + kickerScore, name: "Две Пары" };
+    if (counts[0] === 2) return { score: 10000000 + kickerScore, name: "Пара" };
 
     return { score: 0 + kickerScore, name: "Старшая карта" };
 }
