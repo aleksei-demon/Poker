@@ -10,12 +10,9 @@ let defeatedBots = [];
 let SMALL_BLIND = 5;
 let BIG_BLIND = 10;
 
-let players = [
-    { id: 'player', name: 'Чел', budget: 100, elementId: '#cards-p' },
-    { id: 'bot-1', name: 'Андрей', budget: 100, elementId: '#cards-1' },
-    { id: 'bot-2', name: 'Ветал', budget: 100, elementId: '#cards-2' },
-    { id: 'bot-3', name: '404', budget: 100, elementId: '#cards-3' }
-];
+
+
+
 
 // Внутри PokerEngine.gameState или как константу сверху файла:
 const TOURNAMENT_STRUCTURE = [
@@ -46,42 +43,55 @@ const BOT_RESERVE = [
     { name: 'Федя', style: 'BLUFF', bluffChance: 0.40, aggression: 1.6, looseFactor: 1.2 },
     { name: 'Михалыч', style: 'ROCK', bluffChance: 0.02, aggression: 0.8, looseFactor: 0.85 },
     { name: 'Гарик', style: 'LOOSE', bluffChance: 0.20, aggression: 1.4, looseFactor: 1.4 },
-    { name: 'Сентябрь', style: 'RANDOM', bluffChance: 0.50, aggression: 1.8, looseFactor: 1.0 }
+    { name: 'Сентябрь', style: 'RANDOM', bluffChance: 0.50, aggression: 1.8, looseFactor: 1.0 },
+    { name: 'Болт', style: 'BOLT', bluffChance: 0.99, aggression: 5.0, looseFactor: 2.0 },
+];
+
+
+// 1. Берем случайного бота из резерва на место Андрея
+// 1. Берем случайного бота из резерва на место Андрея для ПЕРВОЙ игры
+const randomFirstBot = BOT_RESERVE[Math.floor(Math.random() * BOT_RESERVE.length)];
+
+// 2. Инициализируем профили (Ветал и 404 всегда со старта)
+const BOT_PROFILES = {
+    'bot-1': randomFirstBot,
+    'bot-2': { name: 'Ветал', style: 'MANIAC', bluffChance: 0.25, aggression: 2.5, looseFactor: 1.3 },
+    'bot-3': { name: '404', style: 'GTO', bluffChance: 0.12, aggression: 1.0, looseFactor: 1.0 }
+};
+
+// 3. СВЯЗЫВАЕМ СТАРТОВЫЙ МАССИВ ИГРОКОВ С ПРОФИЛЯМИ
+let players = [
+    { id: 'player', name: 'Вы', budget: 100, cards: [] },
+    { id: 'bot-1', name: BOT_PROFILES['bot-1'].name, budget: 100, strategy: BOT_PROFILES['bot-1'].style, cards: [] },
+    { id: 'bot-2', name: BOT_PROFILES['bot-2'].name, budget: 100, strategy: BOT_PROFILES['bot-2'].style, cards: [] },
+    { id: 'bot-3', name: BOT_PROFILES['bot-3'].name, budget: 100, strategy: BOT_PROFILES['bot-3'].style, cards: [] }
 ];
 
 function startNextTournamentRound() {
     console.log("=== СМЕНА СОСТАВА: ЗА СТОЛ САДЯТСЯ НОВЫЕ ИГРОКИ ===");
 
-    // 1. Перемешиваем резерв, чтобы боты выпадали случайно, а не по очереди
+    // 1. Перемешиваем резерв, чтобы боты выпадали случайно
     const shuffledReserve = [...BOT_RESERVE].sort(() => Math.random() - 0.5);
 
-    // 2. Берем трех случайных ботов из перемешанного резерва для ПРОФИЛЕЙ
-    const newBot1Data = shuffledReserve[0];
-    const newBot2Data = shuffledReserve[1];
-    const newBot3Data = shuffledReserve[2];
+    // 2. Обновляем глобальные профили для ИИ
+    BOT_PROFILES['bot-1'] = shuffledReserve[0];
+    BOT_PROFILES['bot-2'] = shuffledReserve[1];
+    BOT_PROFILES['bot-3'] = shuffledReserve[2];
 
-    //  ПЕРЕСАДКА ХАРАКТЕРОВ   
-    BOT_PROFILES['bot-1'] = newBot1Data;
-    BOT_PROFILES['bot-2'] = newBot2Data;
-    BOT_PROFILES['bot-3'] = newBot3Data;
+    // 3. Синхронизируем массив игроков (без уничтожения ссылок и ломания карт)
+    players.forEach(p => {
+        if (p.id !== 'player') {
+            const currentProfile = BOT_PROFILES[p.id];
 
-    // 3. Ротация имен и бюджетов в глобальном массиве players
-    let botIndex = 0;
-    players = players.map(p => {
-        if (p.id === 'player') {
-            return p; // Твой баланс (например, 400$) не трогаем!
-        } else {
-            // ИСПРАВЛЕНО: берем данные из shuffledReserve вместо несуществующего pool
-            const newBotData = shuffledReserve[botIndex++];
-            return {
-                id: p.id,
-                name: newBotData.name,
-                budget: 100, // Новые боты заходят со 100$
-                strategy: newBotData.style, // На всякий случай пишем актуальный стиль
-                cards: []
-            };
+            p.name = currentProfile.name;
+            p.strategy = currentProfile.style; // Железно пишем актуальный стиль для runBotLogic!
+            p.budget = 100;                     // Сбрасываем стек до 100$ для защиты титула
+
+            // Массив p.cards НЕ очищаем здесь вслепую, чтобы не сломать раздачу движка!
         }
     });
+
+    console.log(`[TOURNAMENT]: Состав обновлен. На местах: ${players[1].name}, ${players[2].name}, ${players[3].name}`);
 
     // 4. СБРОС UI: возвращаем боксам ботов живой вид и обновляем данные (имена и балансы)
     players.forEach(p => {
@@ -701,29 +711,48 @@ const PokerEngine = {
 
         let balanceSelector = '#p-balance';
         let nameSelector = null;
+        let fallbackBotSelector = null; // Подстраховка для поиска внутри контейнера бота
 
         if (playerObj.id === 'bot-1') {
             balanceSelector = '#bot-balance-1';
             nameSelector = '#bot-1 .white';
+            fallbackBotSelector = '#bot-1';
         }
         if (playerObj.id === 'bot-2') {
             balanceSelector = '#bot-balance-2';
             nameSelector = '#bot-2 .white';
+            fallbackBotSelector = '#bot-2';
         }
         if (playerObj.id === 'bot-3') {
             balanceSelector = '#bot-balance-3';
             nameSelector = '#bot-3 .white';
+            fallbackBotSelector = '#bot-3';
         }
 
         // Синхронизируем баланс
         const balanceEl = document.querySelector(balanceSelector);
         if (balanceEl) balanceEl.textContent = ` ${playerObj.budget}$`;
 
-        // СИНХРОНИЗАЦИЯ ИМЕНИ: Если это бот, динамически обновляем его имя на столе
+        // СИНХРОНИЗАЦИЯ ИМЕНИ
         if (nameSelector) {
-            const nameEl = document.querySelector(nameSelector);
-            if (nameEl && nameEl.textContent.trim() !== playerObj.name.trim()) {
-                nameEl.textContent = `${playerObj.name} `;
+            let nameEl = document.querySelector(nameSelector);
+
+            // ПОДСТРАХОВКА: Если селектор с классом .white не найден, ищем заголовок h3 или span внутри контейнера бота
+            if (!nameEl && fallbackBotSelector) {
+                const botContainer = document.querySelector(fallbackBotSelector);
+                if (botContainer) {
+                    nameEl = botContainer.querySelector('h3') || botContainer.querySelector('.name') || botContainer.querySelector('span');
+                }
+            }
+
+            // Обновляем текст, если элемент найден
+            if (nameEl) {
+                if (nameEl.textContent.trim() !== playerObj.name.trim()) {
+                    console.log(`[UI ENGINE] Меняем имя на плашке ${playerObj.id}: с "${nameEl.textContent.trim()}" на "${playerObj.name}"`);
+                    nameEl.textContent = `${playerObj.name} `;
+                }
+            } else {
+                console.warn(`[UI ENGINE] Не удалось найти элемент имени для ${playerObj.id}. Проверь классы в HTML!`);
             }
         }
     },
@@ -863,16 +892,13 @@ function makeAction(type, amount = 0, e) {
 }
 
 // Конфигурация характеров ботов (Их базовые настройки)
-// При смене состава твоя логика просто заменяет эти три ключа объектами из резерва!
-const BOT_PROFILES = {
-    'bot-1': { name: 'Андрей', style: 'ROCK', bluffChance: 0.05, aggression: 1.5, looseFactor: 1.0 },
-    'bot-2': { name: 'Ветал', style: 'MANIAC', bluffChance: 0.25, aggression: 2.5, looseFactor: 1.3 },
-    'bot-3': { name: '404', style: 'GTO', bluffChance: 0.12, aggression: 1.0, looseFactor: 1.0 }
-};
+// 2. Инициализируем стартовые профили (Ветал и 404 всегда на месте!)
+
 
 function runBotLogic(botId) {
-    // 1. Находим профиль и объект бота в памяти
-    const profile = BOT_PROFILES[botId];
+    // =================================================================================
+    // 1. НАХОДИМ ОБЪЕКТ БОТА И ЕГО АКТУАЛЬНЫЙ СТИЛЬ
+    // =================================================================================
     const botObj = players.find(p => p.id === botId);
 
     // Если бот пуст, выбыл или у него кончились фишки — автоматический фолд
@@ -881,15 +907,22 @@ function runBotLogic(botId) {
         return;
     }
 
-    // 2. Собираем карты для анализа
+    // Достаем профиль для блефов/агрессии, а имя и стиль берем ОФИЦИАЛЬНЫЕ из объекта игрока
+    const profile = BOT_PROFILES[botId] || {};
+    const botName = botObj.name;
+    const style = botObj.strategy || 'GTO'; // Единственное объявление style на всю функцию!
+
+    // =================================================================================
+    // 2. СОБИРАЕМ КАРТЫ ДЛЯ АНАЛИЗА
+    // =================================================================================
     const boardCards = PokerEngine.gameState.board || [];
     const sevenCards = [...(botObj.cards || []), ...boardCards];
 
     let handStrength = 0.15; // Дефолтная сила (мусор)
     let handName = "Старшая карта";
 
-  // =================================================================================
-    // 3. УМНОЕ РАСПРЕДЕЛЕНИЕ ОЦЕНКИ ПО УЛИЦАМ (ИСПРАВЛЕНО ПОД НОВЫЕ МИЛЛИОНЫ)
+    // =================================================================================
+    // 3. УМНОЕ РАСПРЕДЕЛЕНИЕ ОЦЕНКИ ПО УЛИЦАМ (ПОД НОВЫЕ МИЛЛИОНЫ)
     // =================================================================================
     if (PokerEngine.gameState.street === 'PREFLOP') {
         handStrength = evaluatePreflopHand(botObj.cards);
@@ -900,16 +933,15 @@ function runBotLogic(botId) {
             const flopEval = evaluateFiveCards(sevenCards);
             if (flopEval && typeof flopEval.score !== 'undefined') {
                 const score = flopEval.score;
-                handName = flopEval.name; // Берем имя комбинации прямо из анализатора!
+                handName = flopEval.name;
 
-                // Калибровка силы для Флопа под новые миллионы:
-                if (score >= 60000000) handStrength = 0.95; // Фулл-Хаус, Каре, Стрит-Флеш
+                if (score >= 60000000) handStrength = 0.95;      // Фулл-Хаус+
                 else if (score >= 50000000) handStrength = 0.85; // Флеш
                 else if (score >= 40000000) handStrength = 0.80; // Стрит
-                else if (score >= 30000000) handStrength = 0.75; // Сет (Тройка)
+                else if (score >= 30000000) handStrength = 0.75; // Сет
                 else if (score >= 20000000) handStrength = 0.65; // Две пары
-                else if (score >= 10000000) handStrength = 0.45; // Одна Пара
-                else handStrength = 0.20;                        // Старшая карта / Ничего
+                else if (score >= 10000000) handStrength = 0.45; // Пара
+                else handStrength = 0.20;
             }
         } catch (e) {
             console.warn(`[BOT-AI] Сбой калькулятора флопа для ${botId}:`, e);
@@ -917,14 +949,12 @@ function runBotLogic(botId) {
         }
     }
     else {
-        // ТЁРН И РИВЕР
         try {
             const handEval = getBestCombination(sevenCards);
             if (handEval && typeof handEval.score !== 'undefined') {
                 const handScore = handEval.score;
-                handName = handEval.name; // Имя берем строго из движка!
+                handName = handEval.name;
 
-                // Точнейшая калибровка силы на Тёрне/Ривере под новые миллионы:
                 if (handScore >= 80000000) handStrength = 0.98;      // Стрит-Флеш
                 else if (handScore >= 70000000) handStrength = 0.95; // Каре
                 else if (handScore >= 60000000) handStrength = 0.90; // Фулл-Хаус
@@ -933,7 +963,7 @@ function runBotLogic(botId) {
                 else if (handScore >= 30000000) handStrength = 0.70; // Сет
                 else if (handScore >= 20000000) handStrength = 0.55; // Две пары
                 else if (handScore >= 10000000) handStrength = 0.35; // Пара
-                else handStrength = 0.15;                            // Старшая карта
+                else handStrength = 0.15;
             }
         } catch (e) {
             console.warn(`[BOT-AI] Сбой getBestCombination для ${botId}:`, e);
@@ -941,68 +971,81 @@ function runBotLogic(botId) {
         }
     }
 
-    // 4. Расчет экономики стола
+    // =================================================================================
+    // 4. РАСЧЕТ ЭКОНОМИКИ СТОЛА
+    // =================================================================================
     const alreadyBet = PokerEngine.gameState.roundBets[botId] || 0;
     const callAmount = PokerEngine.gameState.currentBet - alreadyBet;
     const currentPot = PokerEngine.gameState.pot;
 
-    // Шансы банка (риск к общему выигрышу)
     const potOdds = callAmount / (currentPot + callAmount || 1);
 
     // =================================================================================
-    // 5. МОДИФИКАЦИЯ ПОВЕДЕНИЯ НА ОСНОВЕ УНИКАЛЬНОГО ХАРАКТЕРА БОТА
+    // 5. МОДИФИКАЦИЯ ПОВЕДЕНИЯ НА ОСНОВЕ УНИКАЛЬНОГО ХАРАКТЕРА
     // =================================================================================
     let randomFactor = Math.random() * (profile.bluffChance || 0.1);
-
-    // Мягкие дефолтные значения для старых ботов, если новые свойства не заданы
     const looseFactor = profile.looseFactor || 1.0;
-    const style = profile.style;
 
-    // Внедряем характер в силу руки
+    // Внедряем характер в силу руки (переменная style берется из начала функции)
     let decisionScore = handStrength * looseFactor + randomFactor;
 
-    // Точечные уникальные фичи для новых личностей:
-    if (style === 'RANDOM') { // Сентябрь
-        // Абсолютно непредсказуем. Может выкинуть натс, может олл-инить на мусоре
+    if (style === 'RANDOM') {
         decisionScore = Math.random();
     }
-    else if (style === 'MATH') { // Платон
-        // Игнорирует блеф, играет строго по шансам банка и чистой математике комбинации
+    else if (style === 'MATH') {
         decisionScore = handStrength;
         randomFactor = 0;
     }
-    else if (style === 'ROCK') { // Михалыч
-        // Сверхосторожный. Искусственно занижает ценность слабых рук, играет только верняк
+    else if (style === 'ROCK') {
         if (handStrength < 0.4) decisionScore -= 0.15;
     }
-    else if (style === 'BLUFF') { // Федя
-        // Если карта слабая, Федя с вероятностью 35% включает режим безумного блефа
+    else if (style === 'BLUFF') {
         if (handStrength < 0.35 && Math.random() < 0.35) {
             decisionScore += 0.5;
         }
     }
 
-    console.log(`[BOT-AI] ${profile.name} (${style}) думает на ${PokerEngine.gameState.street}. Рука: ${handName}, Итоговая Сила: ${decisionScore.toFixed(2)}, Шансы банка: ${potOdds.toFixed(2)}`);
+    console.log(`[BOT-AI] ${botName} (${style}) думает на ${PokerEngine.gameState.street}. Рука: ${handName}, Итоговая Сила: ${decisionScore.toFixed(2)}, Шансы банка: ${potOdds.toFixed(2)}`);
 
     // =================================================================================
-    // 6. ДЕРЕВЯННАЯ ЛОГИКА ДЕЙСТВИЙ (С учетом характера)
+    // 6. ЛОГИКА ДЕЙСТВИЙ
     // =================================================================================
     const agg = profile.aggression || 1.0;
 
+    // СПЕЦИАЛЬНЫЙ РЕЖИМ БОТА "БОЛТ"
+    if (style === 'BOLT') {
+        const activePlayers = players.filter(p => p.budget > 0);
+        const minBudget = Math.min(...activePlayers.map(p => p.budget));
+
+        const targetBet = minBudget;
+        if (targetBet >= botObj.budget) {
+            PokerEngine.executeAction(botId, 'ALL-IN');
+            return;
+        }
+
+        if (callAmount <= 0) {
+            PokerEngine.executeAction(botId, 'RAISE', targetBet);
+        } else {
+            if (PokerEngine.gameState.currentBet < targetBet) {
+                PokerEngine.executeAction(botId, 'RAISE', targetBet);
+            } else {
+                PokerEngine.executeAction(botId, 'CALL');
+            }
+        }
+        return;
+    }
+
     // Ситуация А: Ставок перед ботом нет (ЧЕК или РЕЙЗ)
     if (callAmount <= 0) {
-        // Платон (MATH) не ставит на пустом месте без явного перевеса
         if (style === 'MATH' && decisionScore < 0.5) {
             PokerEngine.executeAction(botId, 'CHECK');
             return;
         }
 
         if (decisionScore > 0.65 || style === 'AGRESSIVE') {
-            // Агрессивные боты крутят ставку сильнее
             const raiseSize = Math.round(20 * agg);
             PokerEngine.executeAction(botId, 'RAISE', raiseSize);
         } else if (decisionScore > 0.4 && Math.random() < 0.3) {
-            // Полублеф
             PokerEngine.executeAction(botId, 'RAISE', 20);
         } else {
             PokerEngine.executeAction(botId, 'CHECK');
@@ -1010,10 +1053,8 @@ function runBotLogic(botId) {
     }
     // Ситуация Б: Перед ботом стоит ставка
     else {
-        // Если ставка под стек — выбор All-In или Фолд
         if (callAmount >= botObj.budget) {
             if (style === 'MATH') {
-                // Платон сравнивает шансы банка напрямую с математической силой
                 if (handStrength > potOdds && handStrength > 0.45) {
                     PokerEngine.executeAction(botId, 'ALL-IN');
                 } else {
@@ -1030,7 +1071,6 @@ function runBotLogic(botId) {
             return;
         }
 
-        // Логика обычного рейза/колла/фолда
         if (decisionScore > 0.78 || style === 'AGRESSIVE') {
             if (Math.random() < 0.35 && botObj.budget < currentPot && style !== 'MATH') {
                 PokerEngine.executeAction(botId, 'ALL-IN');
@@ -1039,7 +1079,6 @@ function runBotLogic(botId) {
                 PokerEngine.executeAction(botId, 'RAISE', raiseSize);
             }
         }
-        // Математическое обоснование для колла (Шансы банка)
         else if (style === 'MATH' ? (handStrength > potOdds) : (decisionScore > potOdds || decisionScore > 0.36)) {
             PokerEngine.executeAction(botId, 'CALL');
         }
@@ -1048,6 +1087,7 @@ function runBotLogic(botId) {
         }
     }
 }
+
 // Надежная оценка стартовых карт на Префлопе (извлечение чистых номиналов)
 function evaluatePreflopHand(cards) {
     if (!cards || cards.length < 2) return 0.1;
@@ -1086,6 +1126,9 @@ function evaluatePreflopHand(cards) {
 // ТОЧКА ЗАПУСКА ИГРЫ
 document.addEventListener('DOMContentLoaded', () => {
     console.log('[DOM]: Инициализация интерфейса покера.');
+    // 1. Сначала принудительно синхронизируем данные из JS в UI (маскируем Андрея на Гарика/Платона)
+    players.forEach(p => PokerEngine.syncBalancesUI(p));
+    // 2. И только потом запускаем первую раздачу
     startNewHand();
 });
 
