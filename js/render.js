@@ -69,6 +69,32 @@ const myFields = [
     // И Г Р О К
     { tag: 'section', class: 'player', children: [{ tag: 'div.dealer-chip', innerText: 'D' }, { tag: 'p#cards-p' }] },
 
+    // Р Е Г У Л Я Т О Р   С Т А В О К (Полностью очищен от инлайн-стилей)
+    {
+        tag: 'div#raise-slider-container',
+        children: [
+            {
+                tag: 'div.slider-title-block',
+                children: [
+                    { tag: 'span', innerText: 'Рейз до: ' },
+                    { tag: 'span#slider-value', innerText: '0' },
+                    { tag: 'span', innerText: ' $' }
+                ]
+            },
+            {
+                tag: 'input#raise-range-slider',
+                attr: { type: 'range', min: '0', max: '100', step: '5' }
+            },
+            {
+                tag: 'div.slider-labels-block',
+                children: [
+                    { tag: 'span#slider-min-label', innerText: 'Мин' },
+                    { tag: 'span#slider-max-label', innerText: 'Макс' }
+                ]
+            }
+        ]
+    },
+
     // К Н О П К И
     {
         tag: 'section',

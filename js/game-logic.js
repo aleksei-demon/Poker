@@ -2,9 +2,13 @@
 //  GAME-LOGIC.JS — логика приложения и стейт-машина
 // =============================================================================
 
+
+// Массив имен тех, кого мы уже размазали (для фана и истории)
+let defeatedBots = [];
+
 // 1. Конфигурация игры (Глобальные переменные)
-const SMALL_BLIND = 5;
-const BIG_BLIND = 10;
+let SMALL_BLIND = 5;
+let BIG_BLIND = 10;
 
 let players = [
     { id: 'player', name: 'Чел', budget: 100, elementId: '#cards-p' },
@@ -35,6 +39,69 @@ function getNextActivePlayerIndex(startIndex) {
     return startIndex;
 }
 
+// Пул новых ботов, которые ждут своей очереди в клубе
+const BOT_RESERVE = [
+    { name: 'Аркадий', type: 'AGRESSIVE' },
+    { name: 'Платон', type: 'MATH' },
+    { name: 'Федя', type: 'BLUFF' },
+    { name: 'Михалыч', type: 'ROCK' },
+    { name: 'Гарик', type: 'LOOSE' },
+    { name: 'Сентябрь', type: 'RANDOM' }
+];
+
+function startNextTournamentRound() {
+    console.log("=== СМЕНА СОСТАВА: ЗА СТОЛ САДЯТСЯ НОВЫЕ ИГРОКИ ===");
+
+    // 1. Перемешиваем резерв ботов
+    let pool = [...BOT_RESERVE].sort(() => Math.random() - 0.5);
+
+    // 2. Ротация имен и бюджетов в глобальном массиве players
+    let botIndex = 0;
+    players = players.map(p => {
+        if (p.id === 'player') {
+            return p; // Твой баланс (например, 400$) не трогаем!
+        } else {
+            const newBotData = pool[botIndex++];
+            return {
+                id: p.id,
+                name: newBotData.name,
+                budget: 100, // Новые боты заходят со 100$
+                strategy: newBotData.type,
+                cards: []
+            };
+        }
+    });
+
+    // 3. СБРОС UI: возвращаем боксам ботов живой вид и обновляем данные (имена и балансы)
+    players.forEach(p => {
+        // Убираем класс вылета (.eliminated), который повесил checkTableBankruptcy
+        const selector = p.id === 'player' ? '.player' : `#${p.id}`;
+        const el = document.querySelector(selector);
+        if (el) el.classList.remove('eliminated');
+
+        // Сбрасываем прозрачность карт (очистка эффекта FOLD)
+        const cardsSelector = p.id === 'player' ? '#cards-p' : `#cards-${p.id.split('-')[1]}`;
+        const cardsEl = document.querySelector(cardsSelector);
+        if (cardsEl) cardsEl.style.opacity = '1';
+
+        // Обновляем балансы и имена на экране (у ботов встанут новые имена и по 100$)
+        PokerEngine.syncBalancesUI(p);
+    });
+
+    // 4. Сбрасываем блайнды на стартовый Уровень 1
+    if (PokerEngine.gameState) {
+        PokerEngine.gameState.handsPlayed = 0;
+        PokerEngine.gameState.currentLevelIdx = 0;
+    }
+    SMALL_BLIND = 5;
+    BIG_BLIND = 10;
+
+    console.log("[TOURNAMENT]: Раунд защиты титула запущен! Начинаем новую раздачу.");
+
+    // 5. Запускаем новую раздачу через твой стандартный метод!
+    startNewHand();
+}
+
 // 2.==== Д В И Ж О К   И Г Р Ы ===============================
 const PokerEngine = {
     gameState: {
@@ -58,6 +125,8 @@ const PokerEngine = {
     },
 
     initPreflop() {
+        // ТРИГГЕР РОСТА БЛАЙНДОВ: "Ад и Израиль"
+        updateTournamentLevel();
         // 1. Сброс состояния для новой раздачи
         this.gameState.currentBet = BIG_BLIND;
         this.gameState.foldedPlayers = [];
@@ -179,7 +248,15 @@ const PokerEngine = {
         }
 
         showMessage_(`${winner.name} забирает банк ${this.gameState.pot}$!`, 4000);
-        setTimeout(() => { startNewHand(); }, 5500);
+
+        // Перед тем как взводить таймер, смотрим — продолжается ли турнир?
+        setTimeout(() => {
+            if (this.checkTableBankruptcy()) {
+                console.log("[TOURNAMENT]: Следующая раздача отменена, за столом остался абсолютный чемпион.");
+                return; // Турнир окончен, стопаем поток
+            }
+            startNewHand();
+        }, 5500);
     },
 
     handleCall(playerId) {
@@ -385,7 +462,7 @@ const PokerEngine = {
         // Вскрытие карт человека
         const playerRes = showdownResults.find(r => r.id === 'player');
         if (playerRes) {
-            setTimeout(() => { showMessage_(`Ваша рука: ${playerRes.handName}`, 1400); }, delay);
+            setTimeout(() => { showMessage_(`у вас: ${playerRes.handName}`, 1400); }, delay);
             delay += 1500;
         }
 
@@ -468,33 +545,67 @@ const PokerEngine = {
             const el = document.querySelector(selector);
 
             if (p.budget <= 0) {
-                // Игрок действительно банкрот, только если его баланс 0
                 if (el && !el.classList.contains('eliminated')) {
                     el.classList.add('eliminated');
                     console.log(`[TOURNAMENT]: Игрок ${p.name} официально покинул турнир.`);
                 }
             } else {
                 activeCount++;
-                if (el) el.classList.remove('eliminated'); // На всякий случай снимаем класс с живых
+                if (el) el.classList.remove('eliminated');
             }
         });
 
-        // Если остался только 1 живой участник с фишками
+        // =========================================================================
+        // ИНТЕРАКТИВНЫЙ ФИНАЛ: ЕСЛИ ИГРОК ВЫИГРАЛ ТУРНИР
+        // =========================================================================
         if (activeCount === 1) {
             const winner = players.find(p => p.budget > 0);
+
+            // Если победил бот (мало ли), просто стопаем игру
+            if (winner.id !== 'player') {
+                if (this.gameState.botTimer) {
+                    clearTimeout(this.gameState.botTimer);
+                    this.gameState.botTimer = null;
+                }
+                showMessage_(`🏆 ТУРНИР ЗАВЕРШЕН! Победитель: ${winner.name}!`, 10000);
+                return true;
+            }
+
+            // ЕСЛИ ПОБЕДИЛ ЧЕЛОВЕК (НАШ СЦЕНАРИЙ):
             if (this.gameState.botTimer) {
                 clearTimeout(this.gameState.botTimer);
                 this.gameState.botTimer = null;
             }
-            showMessage_(`🏆 ТУРНИР ЗАВЕРШЕН! Победитель: ${winner.name}!`, 10000);
-            return true;
+
+            // Формируем сочный текст с именами проигравших
+            const losers = players.filter(p => p.id !== 'player').map(p => p.name).join(', ');
+            const victoryText = `🏆 Ты раскатал ботов (${losers})! Они ушли пить пиво и занимать на проезд домой. За стол готовы сесть новые игроки с чистыми 100$.`;
+
+            // Выводим сообщение на экран
+            showMessage_(victoryText, 12000);
+
+            // Через 5 секунд, когда игрок прочитает текст, выкатываем системное предложение
+            // Через 5 секунд, когда игрок прочитает текст триумфа, выкатываем стильное предложение
+            setTimeout(async () => {
+                const playAgain = await showCustomConfirm("За Клубный Стол приглашаются новые лица! Готов рискнуть бюджетом?");
+
+                if (playAgain) {
+                    // Перезапускаем турнирный раунд со сменой ботов
+                    startNextTournamentRound();
+                } else {
+                    console.log("[TOURNAMENT]: Игрок решил остаться королем горы и завершил сессию.");
+                    // Сюда можно повесить редирект в главное меню или легкое затемнение стола
+                    showMessage_("Сессия завершена. Вы ушли непобежденным! 👑", 5000);
+                }
+            }, 5000);
+
+            return true; // Останавливаем стандартный запуск следующей раздачи
         }
 
         // Если сам игрок проиграл все фишки
         const playerObj = players.find(p => p.id === 'player');
         if (playerObj && playerObj.budget <= 0) {
-            // Скрываем или блокируем нижние кнопки, чтобы освободить место под плашку
-            const actionPanel = document.querySelector('.action-buttons, .controls'); // укажи свой класс панели
+            const actionPanel = document.querySelector('.action-buttons, .controls');
             if (actionPanel) {
                 actionPanel.style.opacity = '0.1';
                 actionPanel.style.pointerEvents = 'none';
@@ -578,12 +689,32 @@ const PokerEngine = {
         if (bankEl) bankEl.textContent = ` ${this.gameState.pot} $ `;
 
         let balanceSelector = '#p-balance';
-        if (playerObj.id === 'bot-1') balanceSelector = '#bot-balance-1';
-        if (playerObj.id === 'bot-2') balanceSelector = '#bot-balance-2';
-        if (playerObj.id === 'bot-3') balanceSelector = '#bot-balance-3';
+        let nameSelector = null;
 
+        if (playerObj.id === 'bot-1') {
+            balanceSelector = '#bot-balance-1';
+            nameSelector = '#bot-1 .white';
+        }
+        if (playerObj.id === 'bot-2') {
+            balanceSelector = '#bot-balance-2';
+            nameSelector = '#bot-2 .white';
+        }
+        if (playerObj.id === 'bot-3') {
+            balanceSelector = '#bot-balance-3';
+            nameSelector = '#bot-3 .white';
+        }
+
+        // Синхронизируем баланс
         const balanceEl = document.querySelector(balanceSelector);
         if (balanceEl) balanceEl.textContent = ` ${playerObj.budget}$`;
+
+        // СИНХРОНИЗАЦИЯ ИМЕНИ: Если это бот, динамически обновляем его имя на столе
+        if (nameSelector) {
+            const nameEl = document.querySelector(nameSelector);
+            if (nameEl && nameEl.textContent.trim() !== playerObj.name.trim()) {
+                nameEl.textContent = `${playerObj.name} `;
+            }
+        }
     },
 
     toggleControlsUI(isEnabled) {
@@ -633,15 +764,90 @@ const PokerEngine = {
         }
     },
 };
+
 //-------движок игры---------
 
-// Функция связи кнопок интерфейса с движком
+let isSliderOpen = false;
+
 function makeAction(type, amount = 0, e) {
     if (e && typeof e.preventDefault === 'function') e.preventDefault();
-    console.log(`[USER ACTION]: Игрок выбрал ${type} со ставкой: ${amount}`);
-    const actionType = type.toUpperCase();
 
-    // Передаем сумму (важно для RAISE)
+    const actionType = type.toUpperCase();
+    const sliderContainer = document.getElementById('raise-slider-container');
+    const slider = document.getElementById('raise-range-slider');
+    const sliderText = document.getElementById('slider-value');
+    const raiseBtn = document.getElementById('btn-raise'); // Наш селектор из матрицы
+
+    const playerObj = players.find(p => p.id === 'player');
+    const alreadyBet = PokerEngine.gameState.roundBets['player'] || 0;
+    const currentCall = PokerEngine.gameState.currentBet - alreadyBet;
+
+    if (actionType === 'RAISE') {
+        if (!isSliderOpen) {
+            // ПЕРВЫЙ КЛИК: Считаем лимиты и открываем
+            const minRaise = currentCall + (typeof BIG_BLIND !== 'undefined' ? BIG_BLIND : 10);
+            const maxRaise = playerObj.budget;
+
+            if (minRaise >= maxRaise) {
+                console.log("[USER]: Стек слишком мал для кастомного рейза. Идем Ва-Банк.");
+                if (sliderContainer) sliderContainer.style.display = 'none';
+                isSliderOpen = false;
+                if (raiseBtn) raiseBtn.innerText = 'Рейз';
+                PokerEngine.executeAction('player', 'ALL-IN');
+                return;
+            }
+
+            // Инициализация ползунка данными
+            slider.min = minRaise;
+            slider.max = maxRaise;
+            slider.value = minRaise;
+            sliderText.innerText = minRaise;
+
+            document.getElementById('slider-min-label').innerText = `${minRaise}$`;
+            document.getElementById('slider-max-label').innerText = `All-In (${maxRaise}$)`;
+
+            // Связываем движение ползунка с выводом текста
+            slider.oninput = function () {
+                sliderText.innerText = this.value;
+            };
+
+            // Показываем блок регулятора
+            sliderContainer.style.display = 'block';
+            isSliderOpen = true;
+
+            if (raiseBtn) {
+                raiseBtn.innerText = 'ОК';
+                raiseBtn.style.background = '#48bb78'; // Приятный зеленый цвет подтверждения
+            }
+            return;
+        } else {
+            // ВТОРОЙ КЛИК: Считываем ставку и пушим в движок
+            const finalRaiseAmount = parseInt(slider.value, 10);
+
+            sliderContainer.style.display = 'none';
+            isSliderOpen = false;
+
+            if (raiseBtn) {
+                raiseBtn.innerText = 'Рейз';
+                raiseBtn.style.background = '';
+            }
+
+            PokerEngine.executeAction('player', 'RAISE', finalRaiseAmount);
+            return;
+        }
+    }
+
+    // Если нажали любую другую кнопку (Пасс, Чек, Колл) — сворачиваем регулятор ставок
+    if (sliderContainer && isSliderOpen) {
+        sliderContainer.style.display = 'none';
+        isSliderOpen = false;
+        if (raiseBtn) {
+            raiseBtn.innerText = 'Рейз';
+            raiseBtn.style.background = '';
+        }
+    }
+
+    // Стандартное действие для остальных кнопок
     PokerEngine.executeAction('player', actionType, amount);
 }
 

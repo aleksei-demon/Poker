@@ -664,6 +664,161 @@ button {
 	border: 2px solid #fff;
 }
 
+/* Главный всплывающий контейнер ползунка */
+#raise-slider-container {
+	display: none;
+	position: absolute;
+	bottom: 85px;
+	left: 50%;
+	transform: translateX(-50%);
+	background: rgba(20, 24, 33, 0.95);
+	border: 2px solid #4a5568;
+	padding: 14px;
+	border-radius: 12px;
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+	z-index: 9999;
+	width: 85%;
+	max-width: 280px;
+	text-align: center;
+	backdrop-filter: blur(4px);
+}
+
+/* Блок с текстом "Рейз до: XX $" */
+.slider-title-block {
+	color: #fff;
+	margin-bottom: 8px;
+	font-size: 16px;
+	font-weight: bold;
+}
+
+#slider-value {
+	color: #ecc94b;
+	font-size: 20px;
+}
+
+/* Сам ползунок */
+#raise-range-slider {
+	width: 100%;
+	height: 8px;
+	cursor: pointer;
+}
+
+/* Нижний блок с подписями Мин/Макс */
+.slider-labels-block {
+	display: flex;
+	justify-content: space-between;
+	color: #718096;
+	font-size: 11px;
+	margin-top: 2px;
+}
+
+/* Всплывающее окно (оверлей на весь экран) */
+.custom-modal-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(7, 18, 11, 0.65);
+	/* Глубокий темный оттенок с зеленым отливом */
+	backdrop-filter: blur(8px);
+	/* Красивое заблюривание всего вокруг */
+	-webkit-backdrop-filter: blur(8px);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	z-index: 9999;
+	opacity: 0;
+	transition: opacity 0.4s ease;
+}
+
+.custom-modal-overlay.active {
+	opacity: 1;
+}
+
+/* Само окно: смесь 50-х, золота и зеленого неона */
+.custom-modal-window {
+	background: #0d2316;
+	/* Цвет глубокого сукна в тени */
+	border: 3px solid #d4af37;
+	/* Благородное золото */
+	border-radius: 12px;
+	padding: 30px;
+	max-width: 450px;
+	width: 90%;
+	text-align: center;
+	box-shadow:
+		0 0 20px rgba(0, 0, 0, 0.8),
+		0 0 15px rgba(57, 255, 20, 0.3),
+		/* Внутреннее мягкое неоновое свечение */
+		inset 0 0 15px rgba(57, 255, 20, 0.2);
+	transform: scale(0.85);
+	transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.custom-modal-overlay.active .custom-modal-window {
+	transform: scale(1);
+}
+
+/* Текст внутри окна */
+.custom-modal-text {
+	color: #f5f2eb;
+	/* Мягкий винтажный белый (под лампы накаливания) */
+	font-size: 1.15rem;
+	line-height: 1.6;
+	margin-bottom: 25px;
+	font-family: sans-serif;
+	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Контейнер для кнопок */
+.custom-modal-buttons {
+	display: flex;
+	justify-content: center;
+	gap: 15px;
+}
+
+/* Базовый стиль кнопок */
+.custom-modal-btn {
+	padding: 12px 24px;
+	font-size: 0.95rem;
+	font-weight: bold;
+	text-transform: uppercase;
+	border-radius: 6px;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	border: 2px solid transparent;
+}
+
+/* Кнопка принять вызов (ОК / Золото + Неон) */
+.custom-modal-btn.btn-confirm {
+	background: #d4af37;
+	color: #07120b;
+	border-color: #ffe894;
+	box-shadow: 0 0 10px rgba(57, 255, 20, 0.4);
+	/* Зеленый неон подсвечивает золото */
+}
+
+.custom-modal-btn.btn-confirm:hover {
+	background: #ffe894;
+	box-shadow: 0 0 20px rgba(57, 255, 20, 0.8);
+	transform: translateY(-2px);
+}
+
+/* Кнопка выйти (Завершить сессию) */
+.custom-modal-btn.btn-cancel {
+	background: transparent;
+	color: #a2a7a4;
+	border-color: #4a534e;
+}
+
+.custom-modal-btn.btn-cancel:hover {
+	color: #ff5555;
+	border-color: #ff5555;
+	background: rgba(255, 85, 85, 0.05);
+	transform: translateY(-2px);
+}
+
 @media screen and (orientation: portrait) {
 
 	.button-panel {

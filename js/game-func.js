@@ -224,5 +224,52 @@ function calculatePots(activePlayers) {
     return pots;
 }
 
+function showCustomConfirm(message) {
+    return new Promise((resolve) => {
+        // Создаем элементы через твой любимый чистый JS
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-modal-overlay';
 
+        const modal = document.createElement('div');
+        modal.className = 'custom-modal-window';
+
+        const textEl = document.createElement('div');
+        textEl.className = 'custom-modal-text';
+        textEl.innerText = message;
+
+        const btnContainer = document.createElement('div');
+        btnContainer.className = 'custom-modal-buttons';
+
+        const confirmBtn = document.createElement('button');
+        confirmBtn.className = 'custom-modal-btn btn-confirm';
+        confirmBtn.innerText = 'Принять вызов';
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'custom-modal-btn btn-cancel';
+        cancelBtn.innerText = 'Завершить сессию';
+
+        // Собираем пирог
+        btnContainer.appendChild(confirmBtn);
+        btnContainer.appendChild(cancelBtn);
+        modal.appendChild(textEl);
+        modal.appendChild(btnContainer);
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+
+        // Плавное появление (нужен микро-таймаут для запуска CSS transition)
+        setTimeout(() => overlay.classList.add('active'), 10);
+
+        // Функция закрытия окон
+        const closeModal = (result) => {
+            overlay.classList.remove('active');
+            // Удаляем из DOM после завершения анимации
+            setTimeout(() => overlay.remove(), 400);
+            resolve(result);
+        };
+
+        // Навешиваем клики
+        confirmBtn.onclick = () => closeModal(true);
+        cancelBtn.onclick = () => closeModal(false);
+    });
+}
 
