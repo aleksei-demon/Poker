@@ -888,7 +888,9 @@ function runBotLogic(botId) {
     let handStrength = 0.15; // Дефолтная сила (мусор)
     let handName = "Старшая карта";
 
-    // 3. УМНОЕ РАСПРЕДЕЛЕНИЕ ОЦЕНКИ ПО УЛИЦАМ
+  // =================================================================================
+    // 3. УМНОЕ РАСПРЕДЕЛЕНИЕ ОЦЕНКИ ПО УЛИЦАМ (ИСПРАВЛЕНО ПОД НОВЫЕ МИЛЛИОНЫ)
+    // =================================================================================
     if (PokerEngine.gameState.street === 'PREFLOP') {
         handStrength = evaluatePreflopHand(botObj.cards);
         handName = "Стартовые карты";
@@ -897,10 +899,17 @@ function runBotLogic(botId) {
         try {
             const flopEval = evaluateFiveCards(sevenCards);
             if (flopEval && typeof flopEval.score !== 'undefined') {
-                if (flopEval.score > 2000000) handStrength = 0.65;     // Две пары и выше
-                else if (flopEval.score > 1000000) handStrength = 0.45; // Пара
-                else handStrength = 0.2;                                // Ничего нет
-                handName = flopEval.name;
+                const score = flopEval.score;
+                handName = flopEval.name; // Берем имя комбинации прямо из анализатора!
+
+                // Калибровка силы для Флопа под новые миллионы:
+                if (score >= 60000000) handStrength = 0.95; // Фулл-Хаус, Каре, Стрит-Флеш
+                else if (score >= 50000000) handStrength = 0.85; // Флеш
+                else if (score >= 40000000) handStrength = 0.80; // Стрит
+                else if (score >= 30000000) handStrength = 0.75; // Сет (Тройка)
+                else if (score >= 20000000) handStrength = 0.65; // Две пары
+                else if (score >= 10000000) handStrength = 0.45; // Одна Пара
+                else handStrength = 0.20;                        // Старшая карта / Ничего
             }
         } catch (e) {
             console.warn(`[BOT-AI] Сбой калькулятора флопа для ${botId}:`, e);
@@ -908,17 +917,23 @@ function runBotLogic(botId) {
         }
     }
     else {
+        // ТЁРН И РИВЕР
         try {
             const handEval = getBestCombination(sevenCards);
             if (handEval && typeof handEval.score !== 'undefined') {
                 const handScore = handEval.score;
-                handName = handEval.name;
+                handName = handEval.name; // Имя берем строго из движка!
 
-                if (handScore > 5000000) handStrength = 0.9;       // Флеш / Фулл-хаус+
-                else if (handScore > 3000000) handStrength = 0.75;  // Сет / Стрит
-                else if (handScore > 2000000) handStrength = 0.6;   // Две пары
-                else if (handScore > 1000000) handStrength = 0.4;   // Пара
-                else handStrength = 0.15;                           // Старшая карта
+                // Точнейшая калибровка силы на Тёрне/Ривере под новые миллионы:
+                if (handScore >= 80000000) handStrength = 0.98;      // Стрит-Флеш
+                else if (handScore >= 70000000) handStrength = 0.95; // Каре
+                else if (handScore >= 60000000) handStrength = 0.90; // Фулл-Хаус
+                else if (handScore >= 50000000) handStrength = 0.85; // Флеш
+                else if (handScore >= 40000000) handStrength = 0.80; // Стрит
+                else if (handScore >= 30000000) handStrength = 0.70; // Сет
+                else if (handScore >= 20000000) handStrength = 0.55; // Две пары
+                else if (handScore >= 10000000) handStrength = 0.35; // Пара
+                else handStrength = 0.15;                            // Старшая карта
             }
         } catch (e) {
             console.warn(`[BOT-AI] Сбой getBestCombination для ${botId}:`, e);
