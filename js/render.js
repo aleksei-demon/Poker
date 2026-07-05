@@ -120,55 +120,47 @@ document.body.appendChild(container);
 
 //_______________________________________________________________
 // - - - Р Е Н Д Е Р   К А Р Т  - - -
-
 function renderCardsTo(cardsArray, target_id, isSecret = false) {
     const container = document.querySelector(target_id);
     if (!container) { console.error(`Элемент "${target_id}" не найден!`); return; }
 
     // --- АВТОМАТИЧЕСКОЕ СОХРАНЕНИЕ В МАССИВЫ ДЛЯ АНАЛИЗА ---
     if (target_id === '#board') {
-        // ЗАЩИТА: Если борд по какой-то причине undefined или null, создаем пустой массив
+        // УДАЛЯЕМ ОТСЮДА .push()! 
+        // Логика игры в game-logic.js теперь сама управляет состоянием board.
         if (!PokerEngine.gameState.board) { PokerEngine.gameState.board = []; }
-        // Если это общий стол, пишем карты в gameState.board
-        PokerEngine.gameState.board.push(...cardsArray);
     } else {
-        // Если это игрок или бот, ищем его в глобальном массиве players
-        // Мапим target_id ('#cards-1', '#cards-p') на реальные id участников ('bot-1', 'player')
+        // Для игроков и ботов оставляем, тут всё работает чётко
         let targetPlayerId;
         if (target_id === '#cards-p') {
             targetPlayerId = 'player';
         } else {
-            targetPlayerId = `bot-${target_id.replace('#cards-', '')}`; // '#cards-1' -> 'bot-1'
+            targetPlayerId = `bot-${target_id.replace('#cards-', '')}`;
         }
 
         const foundPlayer = players.find(p => p.id === targetPlayerId);
         if (foundPlayer) {
-            foundPlayer.cards = [...cardsArray]; // Записываем массив символов (например, ['b', 'c'])
+            foundPlayer.cards = [...cardsArray];
             console.log(`[DATA ENGINE]: Карты для ${foundPlayer.name} сохранены в память:`, foundPlayer.cards);
         }
     }
     // -----------------------------------------------------
 
+    // Дальше твой стандартный код отрисовки спанов...
     cardsArray.forEach(char => {
         const span = document.createElement('span');
         span.textContent = char;
-
-        // Выставляем базовый класс карты и цвет по регистру
         span.classList.add('card');
         const isRed = char === char.toUpperCase();
         span.dataset.color = isRed ? 'red' : 'black';
-
-        // Логика смены классов:
         if (isSecret) {
             span.classList.add('card-back');
         } else {
             span.classList.add('card-front');
         }
-
         container.appendChild(span);
     });
 }
-
 // - - - Р Е Н Д Е Р   К А Р Т  - - -
 //==============================================================================
 
