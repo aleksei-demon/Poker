@@ -22,6 +22,12 @@ function tasov() {
     }
     KOLODA = temp_masti;
     console.log("[DECK ENGINE]: Колода успешно перемешана. Карт: " + KOLODA.length);
+    // --- ПРОВЕРКА НА ВШЕЙ ---
+    const uniqueCards = new Set(KOLODA);
+    console.log("[DECK ENGINE]: Колода успешно перемешана. Карт: " + KOLODA.length + " | Уникальных: " + uniqueCards.size);
+    if (KOLODA.length !== uniqueCards.size) {
+        console.error("[CRITICAL]: В КОЛОДЕ ОБНАРУЖЕНЫ ДУБЛИКАТЫ ЕЩЕ ДО РАЗДАЧИ!");
+    }
 }
 // Первый запуск при старте приложения
 tasov();
@@ -153,10 +159,10 @@ function getBestCombination(sevenChars) {
 function dealCards(deck, count, targetId, isSecret = false) {
     const cardsToGive = [];
 
-    // Если в колоде внезапно кончились карты — страхуемся перетасовкой
     if (deck.length < count) {
         console.warn("[WARNING]: Карт в колоде мало! Срочная перетасовка.");
         tasov();
+        deck = KOLODA; // Подменяем локальный deck на свежесозданную глобальную KOLODA
     }
 
     for (let i = 0; i < count; i++) {
