@@ -420,7 +420,9 @@ const PokerEngine = {
             this.gameState.street = 'FLOP';
             showMessage_("Флоп!", msDelay, true);
             const newCards = dealCards(KOLODA, 3, '#board', false);
-            this.gameState.board.push(...newCards);
+
+            // Чистый вариант: Жестко присваиваем массив из 3 новых карт флопа
+            this.gameState.board = [...newCards];
 
             setTimeout(() => { autoRunBoard ? this.advanceStreet() : this.resetTurnForNewStreet(); }, msDelay);
 
@@ -428,7 +430,9 @@ const PokerEngine = {
             this.gameState.street = 'TURN';
             showMessage_("Терн!", msDelay, true);
             const newCards = dealCards(KOLODA, 1, '#board', false);
-            this.gameState.board.push(...newCards);
+
+            // Чистый вариант: Берем старые 3 карты и дописываем 1 новую с Терна
+            this.gameState.board = [...this.gameState.board, ...newCards];
 
             setTimeout(() => { autoRunBoard ? this.advanceStreet() : this.resetTurnForNewStreet(); }, msDelay);
 
@@ -436,7 +440,9 @@ const PokerEngine = {
             this.gameState.street = 'RIVER';
             showMessage_("Ривер!", msDelay, true);
             const newCards = dealCards(KOLODA, 1, '#board', false);
-            this.gameState.board.push(...newCards);
+
+            // Чистый вариант: Берем 4 карты стола и дописываем последнюю 1 карту Ривера
+            this.gameState.board = [...this.gameState.board, ...newCards];
 
             setTimeout(() => { this.advanceStreet(); }, msDelay);
 
