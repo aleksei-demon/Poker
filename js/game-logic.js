@@ -466,8 +466,21 @@ const PokerEngine = {
         const showdownResults = [];
 
         activePlayers.forEach(p => {
-            const sevenCards = [...(p.cards || []), ...boardCards];
+            const rawPlayerCards = Array.isArray(p.cards) ? p.cards : [];
+            const rawBoardCards = Array.isArray(boardCards) ? boardCards : [];
+
+            // БЕРЕМ СТРОГО ПОСЛЕДНИЕ 2 КАРТЫ ИГРОКА И ПОСЛЕДНИЕ 5 КАРТ СТОЛА
+            // Это защитит от забытых не очищенных массивов из прошлых раундов
+            const cleanPlayer = rawPlayerCards.filter(c => typeof c === 'string' && c.length === 1).slice(-2);
+            const cleanBoard = rawBoardCards.filter(c => typeof c === 'string' && c.length === 1).slice(-5);
+
+            const sevenCards = [...cleanPlayer, ...cleanBoard];
+
+            // Вызываем калькулятор
             const bestHand = getBestCombination(sevenCards);
+
+            console.log(`[SHOWDOWN СТРОГИЙ] Игрок: ${p.name}, Карты (${sevenCards.length}):`, sevenCards, `-> ${bestHand.name}`);
+
             showdownResults.push({
                 id: p.id,
                 name: p.name,
@@ -600,7 +613,7 @@ const PokerEngine = {
 
             // Формируем сочный текст с именами проигравших
             const losers = players.filter(p => p.id !== 'player').map(p => p.name).join(', ');
-            const victoryText = `🏆 Ты раскатал ботов (${losers})! Они ушли пить пиво и занимать на проезд домой. За стол готовы сесть новые игроки с чистыми 100$.`;
+            const victoryText = `🏆  (${losers})! ушли пить пиво и занимать на проезд домой. За стол готовы сесть новые игроки с чистыми 100$.`;
 
             // Выводим сообщение на экран
             showMessage_(victoryText, 12000);
@@ -1149,7 +1162,10 @@ function startNewHand() {
         clearTimeout(PokerEngine.gameState.botTimer);
         PokerEngine.gameState.botTimer = null;
     }
-
+    PokerEngine.gameState.board = [];
+    players.forEach(p => {
+        p.cards = [];
+    });
     // 2. Полностью вычищаем все дочерние узлы DOM во всех контейнерах карт
     const cardContainers = ['#board', '#cards-1', '#cards-2', '#cards-3', '#cards-p'];
     cardContainers.forEach(selector => {

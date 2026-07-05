@@ -28,64 +28,86 @@ tasov();
 //-----tasovka-------------------------------------------
 
 //-----A N A L I Z E R-------------------------------------------
-function parseCard(char) {
-    for (let suitIdx = 0; suitIdx < masti.length; suitIdx++) {
-        const valIdx = masti[suitIdx].indexOf(char);
-        if (valIdx !== -1) {
+function parseCard(cardSymbol) {
+    // 1. Проверяем, что нам вообще пришла строка нужной длины
+    if (!cardSymbol || typeof cardSymbol !== 'string' || cardSymbol.length !== 1) {
+        return null;
+    }
+
+    // 2. Проходим по матрице мастей (из твоего массива masti)
+    for (let suitIndex = 0; suitIndex < masti.length; suitIndex++) {
+        const valueIndex = masti[suitIndex].indexOf(cardSymbol);
+
+        // Если символ найден в этой масти, возвращаем объект
+        if (valueIndex !== -1) {
             return {
-                value: valIdx, // 0 = 2, 1 = 3 ... 11 = Король, 12 = Туз
-                suit: suitIdx  // 0 = Пика, 1 = Трефа, 2 = Бубна, 3 = Черва
+                value: valueIndex, // Номинал от 0 (Двойка) до 12 (Туз)
+                suit: suitIndex    // Масть от 0 до 3
             };
         }
     }
+
+    // Если прилетел какой-то левый символ (например, '2') — просто игнорируем его
     return null;
 }
 
 function evaluateFiveCards(fiveChars) {
-    const cards = fiveChars.map(parseCard).sort((a, b) => b.value - a.value);
+    // Безопасный парсинг: убираем любые undefined/null
+    const cards = fiveChars
+        .map(parseCard)
+        .filter(c => c !== null && c !== undefined)
+        .sort((a, b) => b.value - a.value);
+
+    // Если карт не 5, сбрасываем оценку
+    if (cards.length !== 5) return { score: 0, name: "Старшая карта" };
 
     const valueCounts = {};
     const suitCounts = {};
     cards.forEach(c => {
-        if (c) {
-            valueCounts[c.value] = (valueCounts[c.value] || 0) + 1;
-            suitCounts[c.suit] = (suitCounts[c.suit] || 0) + 1;
-        }
+        valueCounts[c.value] = (valueCounts[c.value] || 0) + 1;
+        suitCounts[c.suit] = (suitCounts[c.suit] || 0) + 1;
     });
 
     const counts = Object.values(valueCounts).sort((a, b) => b - a);
 
-    // ИСПРАВЛЕНИЕ: Для кикеров мы сортируем абсолютно ВСЕ 5 карт, 
-    // но сначала по количеству совпадений, а затем по номиналу.
-    // Это гарантирует, что массив ВСЕГДА состоит из 5 элементов.
+    // Сортировка для кикеров
     const sortedValuesForKickers = [...cards].sort((a, b) => {
         const countA = valueCounts[a.value];
         const countB = valueCounts[b.value];
-        if (countA !== countB) return countB - countA; // Сначала тройки/пары
-        return b.value - a.value;                      // Потом старшинство карт внутри групп
+        if (countA !== countB) return countB - countA;
+        return b.value - a.value;
     }).map(c => c.value);
 
     const isFlush = Object.values(suitCounts).some(cnt => cnt === 5);
     let isStraight = false;
 
+    // Классический Стрит
     if (counts.length === 5 && (cards[0].value - cards[4].value === 4)) {
         isStraight = true;
     }
-    // Особый случай: Стрит от Туза до Пятерки (А-5-4-3-2)
-    if (counts.length === 5 && cards[0] && cards[1] && cards[4] && cards[0].value === 12 && cards[1].value === 3 && cards[4].value === 0) {
+
+    // Стрит от Туза до Пятерки (А-5-4-3-2)
+    // Номиналы: А=12, 5=3, 4=2, 3=1, 2=0. Проверяем строго все 5 карт!
+    if (counts.length === 5 &&
+        cards[0].value === 12 &&
+        cards[1].value === 3 &&
+        cards[2].value === 2 &&
+        cards[3].value === 1 &&
+        cards[4].value === 0) {
+
         isStraight = true;
-        // Переносим Туз в конец для правильного расчета кикера Стрита
+        // Переносим Туз в конец (он играет как единица)
         const ace = sortedValuesForKickers.shift();
         sortedValuesForKickers.push(ace);
     }
 
-    // ТЕПЕРЬ СТЕПЕНИ ВСЕГДА СТАБИЛЬНЫ (от 4 до 0)
+    // Расчет kickerScore
     let kickerScore = 0;
     sortedValuesForKickers.forEach((val, index) => {
         kickerScore += val * Math.pow(15, 4 - index);
     });
 
-    // Строгие константы базовых очков (умножены на 10, чтобы кикеры гарантированно умещались внутри своего миллиона)
+    // Строгие константы базовых очков
     if (isStraight && isFlush) return { score: 80000000 + kickerScore, name: "Стрит-Флеш" };
     if (counts[0] === 4) return { score: 70000000 + kickerScore, name: "Каре" };
     if (counts[0] === 3 && counts[1] === 2) return { score: 60000000 + kickerScore, name: "Фулл-Хаус" };
@@ -95,7 +117,7 @@ function evaluateFiveCards(fiveChars) {
     if (counts[0] === 2 && counts[1] === 2) return { score: 20000000 + kickerScore, name: "Две Пары" };
     if (counts[0] === 2) return { score: 10000000 + kickerScore, name: "Пара" };
 
-    return { score: 0 + kickerScore, name: "Старшая карта" };
+    return { score: kickerScore, name: "Старшая карта" };
 }
 
 function getBestCombination(sevenChars) {
