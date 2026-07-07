@@ -62,10 +62,10 @@ const BOT_PROFILES = {
 
 // 3. СВЯЗЫВАЕМ СТАРТОВЫЙ МАССИВ ИГРОКОВ С ПРОФИЛЯМИ
 let players = [
-    { id: 'player', name: 'Вы', budget: 10, cards: [] },
+    { id: 'player', name: 'Вы', budget: 100, cards: [] },
     { id: 'bot-1', name: BOT_PROFILES['bot-1'].name, budget: 100, strategy: BOT_PROFILES['bot-1'].style, cards: [] },
     { id: 'bot-2', name: BOT_PROFILES['bot-2'].name, budget: 100, strategy: BOT_PROFILES['bot-2'].style, cards: [] },
-    { id: 'bot-3', name: BOT_PROFILES['bot-3'].name, budget: 100, strategy: BOT_PROFILES['bot-3'].style, cards: [] }
+    { id: 'bot-3', name: BOT_PROFILES['bot-3'].name, budget: 10, strategy: BOT_PROFILES['bot-3'].style, cards: [] }
 ];
 
 function startNextTournamentRound() {
@@ -662,30 +662,49 @@ const PokerEngine = {
 
         if (luckyReceiver && !StoryState.mihalichSavedPlayer && Math.random() < 0.5) {
 
+            // Динамически определяем сумму подарка и порог для донора
+            // Тебе нужно 20$ (донор должен иметь >= 45$), а для 404 достаточно 5$ (донор >= 15$)
+            const giftAmount = (luckyReceiver.id === 'player') ? 20 : 5;
+            const minDonorBudget = (luckyReceiver.id === 'player') ? 45 : 15;
+
             // ИЩЕМ ДОНОРОВ: Исключаем игрока, саму цель и бота 404
             const kindBots = players.filter(p =>
                 p.id !== 'player' &&
                 p.id !== luckyReceiver.id &&
                 p.name !== '404' &&
                 !p.id.includes('404') &&
-                p.budget >= 15
+                p.budget >= minDonorBudget
             );
 
-            if (kindBots.length > 0) {
-                StoryState.mihalichSavedPlayer = true;
+            // ОСОБЫЙ СЛУЧАЙ: Если обнулилась 404, её ВСЕГДА спасает строго Ветал (если у него есть деньги)
+            let saviorBot = null;
+            if (luckyReceiver.name === '404') {
+                saviorBot = players.find(p => p.name === 'Ветал' && p.budget >= minDonorBudget);
+            } else if (kindBots.length > 0) {
+                // Если спасают тебя — выбираем рандомного мужика из добрых ботов
+                saviorBot = kindBots[Math.floor(Math.random() * kindBots.length)];
+            }
 
-                const saviorBot = kindBots[Math.floor(Math.random() * kindBots.length)];
-                console.log(`[STORY]: Бот ${saviorBot.name} запускает сцену спасения для ${luckyReceiver.name}.`);
+            // Если спаситель найден — запускаем магию
+            if (saviorBot) {
+                StoryState.mihalichSavedPlayer = true;
+                console.log(`[STORY]: Бот ${saviorBot.name} спасает ${luckyReceiver.name} на сумму ${giftAmount}$.`);
 
                 // А. УНИВЕРСАЛЬНАЯ ФУНКЦИЯ ОБНОВЛЕНИЯ DOM
                 const updateVisualBalance = (pObject, newBalance) => {
+                    // Жесткий фикс для ТЕБЯ (твоя плашка в шапке)
                     if (pObject.id === 'player') {
                         const myBalanceSpan = document.getElementById('p-balance') || document.querySelector('#p-balance');
-                        if (myBalanceSpan) {
-                            myBalanceSpan.innerText = ` ${newBalance} $`;
-                        }
+                        if (myBalanceSpan) myBalanceSpan.innerText = ` ${newBalance} $`;
                     }
 
+                    // Жесткий фикс для 404 (прямой наводкой в её спан баланса)
+                    if (pObject.name === '404') {
+                        const bot3Balance = document.getElementById('bot-balance-3') || document.querySelector('#bot-balance-3');
+                        if (bot3Balance) bot3Balance.innerText = ` ${newBalance} $`;
+                    }
+
+                    // Стандартное обновление классов вылета для плашек на столе
                     let el = document.getElementById(pObject.id) || document.querySelector(pObject.id.startsWith('#') ? pObject.id : `#${pObject.id}`);
                     if (!el && pObject.id === 'player') el = document.querySelector('.player');
 
@@ -704,16 +723,16 @@ const PokerEngine = {
                     }
                 };
 
-                // Б. МГНОВЕННО фиксируем балансы в памяти
-                saviorBot.budget -= 10;
-                luckyReceiver.budget = 10;
+                // Б. МГНОВЕННО фиксируем балансы в памяти согласно сценарию (20$ или 5$)
+                saviorBot.budget -= giftAmount;
+                luckyReceiver.budget = giftAmount;
 
-                // В. МГНОВЕННО перерисовываем интерфейс балансов
-                updateVisualBalance(luckyReceiver, 10);
+                // В. МГНОВЕННО перерисовываем интерфейс балансов на экране
+                updateVisualBalance(luckyReceiver, giftAmount);
                 updateVisualBalance(saviorBot, saviorBot.budget);
 
                 // =========================================================================
-                // ЖЕСТКАЯ РЕАНИМАЦИЯ: Возвращаем тебя в список живых для PokerEngine
+                // ЖЕСТКАЯ РЕАНИМАЦИЯ ДЛЯ POKER ENGINE
                 // =========================================================================
                 if (PokerEngine && PokerEngine.gameState) {
                     PokerEngine.gameState.pot = 0;
@@ -734,36 +753,43 @@ const PokerEngine = {
                     try { PokerEngine.render(); } catch (e) { console.warn(e); }
                 }
 
-                // Г. Формируем душевные реплики
-                let botPhrase = '';
+                // Г. СЦЕНАРНЫЕ РЕПЛИКИ И ДИАЛОГИ
                 if (luckyReceiver.id === 'player') {
-                    const phrases = {
-                        'Михалыч': "Держи червонец. Посиди ещё немного с нами. Весело с тобой...",
-                        'Ветал': "Да ладно тебе, не уходи. Возьми десятку, бро, отыграешься.",
-                        'Андрей': "Куда собрался? На вот 10 баксов, погнали дальше."
-                    };
-                    botPhrase = phrases[saviorBot.name] || `Держи 10$, земляк. Рано тебе еще вылетать!`;
-                } else {
-                    if (saviorBot.name === 'Ветал' && luckyReceiver.name === '404') {
-                        botPhrase = "Эй, 404, не грусти! Держи червонец ❤️ Нам без тебя скучно будет.";
-                    } else {
-                        botPhrase = `${luckyReceiver.name}, держи десятку от меня. Клуб не отпускает так просто!`;
-                    }
+                    // Сценарий: Спасают тебя (на 20$)
+                    setTimeout(() => {
+                        const phrases = {
+                            'Михалыч': "Держи двадцатку. Посиди ещё немного с нами. Весело с тобой...",
+                            'Ветал': "Да ладно тебе, не уходи. Возьми двадцатку, бро.",
+                            'Андрей': "Куда собрался? На вот 20 баксов, погнали дальше."
+                        };
+                        const botPhrase = phrases[saviorBot.name] || `Держи 20$, земляк. Рано тебе еще вылетать!`;
+                        const formattedBotId = saviorBot.id.startsWith('#') ? saviorBot.id : `#${saviorBot.id}`;
+                        botSay(formattedBotId, botPhrase, 4000);
+                    }, 1000);
+                } else if (luckyReceiver.name === '404' && saviorBot.name === 'Ветал') {
+                    // Сценарий: Ветал спасает 404 (строго тет-а-тет, без лишних ушей)
+
+                    // 1. Сначала 404 просит о помощи
+                    setTimeout(() => {
+                        const formattedReceiverId = luckyReceiver.id.startsWith('#') ? luckyReceiver.id : `#${luckyReceiver.id}`;
+                        botSay(formattedReceiverId, "- Подкинь пятёрку, а то вылечу...", 3000);
+                    }, 1000);
+
+                    // 2. Через 3.5 секунды Ветал отвечает и пускает сердечко
+                    setTimeout(() => {
+                        const formattedSaviorId = saviorBot.id.startsWith('#') ? saviorBot.id : `#${saviorBot.id}`;
+                        botSay(formattedSaviorId, "- Держи, мне не сложно.", 3000);
+
+                        if (typeof spawnHeartBetween === 'function') {
+                            // Пускаем сердечко от Ветала к 404
+                            spawnHeartBetween('#bot-2', '#bot-3');
+                        }
+                    }, 3500);
                 }
 
-                // Шаг 1: Бот берет слово через секунду
+                // Шаг 2: Чистим стол и запускаем новую раздачу (таймер увеличен до 7 сек, чтобы диалог 404 и Ветала успел прочитаться)
+                const totalDelay = (luckyReceiver.id === 'player') ? 5500 : 7000;
                 setTimeout(() => {
-                    const formattedBotId = saviorBot.id.startsWith('#') ? saviorBot.id : `#${saviorBot.id}`;
-                    botSay(formattedBotId, botPhrase, 4000);
-
-                    if (saviorBot.name === 'Ветал' && luckyReceiver.name === '404' && typeof spawnHeartBetween === 'function') {
-                        spawnHeartBetween('#bot-2', '#bot-3');
-                    }
-                }, 1000);
-
-                // Шаг 2: Запускаем новую раздачу и ЖЕСТКО гарантируем чистый CSS-доступ к кнопкам
-                setTimeout(() => {
-                    // Убеждаемся, что никакие старые стили не блокируют клики по кнопкам на столе
                     const actionPanel = document.querySelector('.action-buttons, .controls');
                     if (actionPanel) {
                         actionPanel.style.opacity = '1';
@@ -777,7 +803,6 @@ const PokerEngine = {
                         try { PokerEngine.render(); } catch (e) { console.warn(e); }
                     }
 
-                    // Стартуем чистый раунд
                     if (typeof startNewHand === 'function') {
                         startNewHand();
                     } else if (this.startHand) {
@@ -785,7 +810,7 @@ const PokerEngine = {
                     }
 
                     console.log(`[STORY]: Сцена спасения успешно завершена. Новая раздача пошла.`);
-                }, 5500);
+                }, totalDelay);
 
                 return true;
             }
@@ -1368,17 +1393,6 @@ function startNewHand() {
         // Шаг 2: Ответ и сердечко
         setTimeout(() => {
             botSay('#bot-2', "Держи, мне не сложно. Играй.", 3500);
-
-            // Обертываем рендер в try-catch, чтобы если он упадет, анимация и игра НЕ зависали!
-            try {
-                if (typeof PokerEngine !== 'undefined' && PokerEngine.render) {
-                    PokerEngine.render();
-                } else if (typeof renderCardsTo === 'function') {
-                    renderCardsTo();
-                }
-            } catch (renderError) {
-                console.warn("[STORY БАГ ПОДТВЕРЖДЕН]: Движок рендера споткнулся, но мы едем дальше:", renderError);
-            }
 
             if (typeof spawnHeartBetween === 'function') {
                 spawnHeartBetween('#bot-2', '#bot-3');
