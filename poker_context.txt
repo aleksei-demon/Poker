@@ -1,0 +1,772 @@
+# AI_CONTEXT.md
+
+# Poker Project
+
+## Overview
+
+Texas Hold'em No Limit poker game.
+
+Language:
+JavaScript (Vanilla)
+
+Architecture:
+Engine + Mechanics + Rendering
+
+Rendering:
+Custom DOM builder
+
+Project Status:
+Playable prototype
+
+---
+
+# File Structure
+
+index.html
+│
+├── appender.js
+├── utils.js
+├── game-func.js
+├── game-logic.js
+└── render.js
+
+---
+
+# Load Order
+
+index.html
+
+↓
+
+appender.js
+
+↓
+
+utils.js
+
+↓
+
+game-func.js
+
+↓
+
+game-logic.js
+
+↓
+
+render.js
+
+---
+
+# Architecture
+
+                User
+                  │
+                  ▼
+           Action Buttons
+                  │
+                  ▼
+            makeAction()
+                  │
+                  ▼
+     PokerEngine.executeAction()
+                  │
+     ┌────────────┴─────────────┐
+     ▼                          ▼
+Game Mechanics             Rendering
+(game-func.js)             (render.js)
+     │                          │
+     └────────────┬─────────────┘
+                  ▼
+                 DOM
+
+---
+
+# File Responsibilities
+
+## index.html
+
+Entry point.
+
+Loads every project module in dependency order.
+
+Contains only root HTML.
+
+---
+
+## appender.js
+
+Purpose
+
+Declarative DOM construction library.
+
+Main API
+
+h()
+
+factory()
+
+nestedBlueprint()
+
+clear()
+
+Responsibilities
+
+- Create DOM nodes
+- Parse blueprint objects
+- Apply styles
+- Apply attributes
+- Attach event listeners
+- Recursive rendering
+
+---
+
+## utils.js
+
+Purpose
+
+General UI utilities.
+
+Main API
+
+showMessage_()
+
+Responsibilities
+
+- Temporary messages
+- Error messages
+- Animation cleanup
+
+---
+
+## game-func.js
+
+Purpose
+
+Poker mechanics library.
+
+Contains reusable game algorithms.
+
+Main API
+
+tasov()
+
+parseCard()
+
+evaluateFiveCards()
+
+getBestCombination()
+
+dealCards()
+
+calculatePots()
+
+makeAutomaticBet()
+
+updateDealerChipsUI()
+
+makeAction()
+
+showCustomConfirm()
+
+Responsibilities
+
+Deck generation
+
+Deck shuffle
+
+Card parsing
+
+Hand evaluation
+
+Best combination search
+
+Automatic blinds
+
+Side pot calculation
+
+Dealer chip
+
+Modal dialogs
+
+---
+
+## game-logic.js
+
+Purpose
+
+Main game engine.
+
+Owns complete game state.
+
+Main Object
+
+PokerEngine
+
+Responsibilities
+
+Game initialization
+
+Round lifecycle
+
+Player turns
+
+Betting
+
+Street progression
+
+Showdown
+
+Winner calculation
+
+Pot distribution
+
+Restart logic
+
+---
+
+## render.js
+
+Purpose
+
+Rendering layer.
+
+Contains every visual component.
+
+Main API
+
+renderCardsTo()
+
+Favicon()
+
+Responsibilities
+
+Application layout
+
+Player rendering
+
+Bot rendering
+
+Board rendering
+
+Card rendering
+
+Action buttons
+
+Slider
+
+Money panel
+
+---
+
+# Global Objects
+
+PokerEngine
+
+players
+
+KOLODA
+
+CURRENT_DEALER
+
+masti
+
+---
+
+# PokerEngine
+
+Owns
+
+gameState
+
+board
+
+pot
+
+players
+
+dealer
+
+currentStreet
+
+currentPlayer
+
+currentBet
+
+lastRaise
+
+Controls
+
+New game
+
+New hand
+
+Betting
+
+Action order
+
+Winner
+
+Showdown
+
+---
+
+# Deck Pipeline
+
+tasov()
+
+↓
+
+KOLODA
+
+↓
+
+dealCards()
+
+↓
+
+renderCardsTo()
+
+---
+
+# Hand Evaluation Pipeline
+
+parseCard()
+
+↓
+
+evaluateFiveCards()
+
+↓
+
+getBestCombination()
+
+↓
+
+Winner
+
+---
+
+# Action Pipeline
+
+Player Click
+
+↓
+
+makeAction()
+
+↓
+
+PokerEngine.executeAction()
+
+↓
+
+Update Game State
+
+↓
+
+Render
+
+---
+
+# Round Pipeline
+
+New Hand
+
+↓
+
+Shuffle
+
+↓
+
+Blinds
+
+↓
+
+Deal
+
+↓
+
+Pre-Flop
+
+↓
+
+Flop
+
+↓
+
+Betting
+
+↓
+
+Turn
+
+↓
+
+Betting
+
+↓
+
+River
+
+↓
+
+Betting
+
+↓
+
+Showdown
+
+↓
+
+Award Pot
+
+↓
+
+Next Hand
+
+---
+
+# Rendering Pipeline
+
+Game State
+
+↓
+
+renderCardsTo()
+
+↓
+
+DOM
+
+↓
+
+Visible UI
+
+---
+
+# Entity Map
+
+PokerEngine
+
+Owns
+
+- gameState
+- board
+- betting
+- turns
+- showdown
+
+Depends on
+
+- game-func.js
+- render.js
+
+---
+
+players[]
+
+Contains
+
+- cards
+- bankroll
+- currentBet
+- folded
+- allIn
+- seat
+- name
+
+Modified by
+
+PokerEngine
+
+Rendered by
+
+renderCardsTo()
+
+---
+
+KOLODA
+
+Current deck.
+
+Created by
+
+tasov()
+
+Consumed by
+
+dealCards()
+
+---
+
+Board
+
+Community cards.
+
+Owned by
+
+PokerEngine.gameState
+
+Rendered by
+
+renderCardsTo()
+
+---
+
+Pot
+
+Owned by
+
+PokerEngine
+
+Updated by
+
+makeAutomaticBet()
+
+executeAction()
+
+awardPot()
+
+---
+
+Dealer
+
+Current dealer position.
+
+Updated after every hand.
+
+Rendered by
+
+updateDealerChipsUI()
+
+---
+
+# Function Index
+
+## appender.js
+
+h()
+
+factory()
+
+nestedBlueprint()
+
+clear()
+
+---
+
+## utils.js
+
+showMessage_()
+
+---
+
+## game-func.js
+
+tasov()
+
+parseCard()
+
+evaluateFiveCards()
+
+getBestCombination()
+
+dealCards()
+
+makeAutomaticBet()
+
+updateDealerChipsUI()
+
+makeAction()
+
+calculatePots()
+
+showCustomConfirm()
+
+---
+
+## game-logic.js
+
+PokerEngine
+
+startNewGame()
+
+startHand()
+
+executeAction()
+
+nextPlayer()
+
+nextStreet()
+
+showdown()
+
+awardPot()
+
+resetRound()
+
+---
+
+## render.js
+
+renderCardsTo()
+
+Favicon()
+
+---
+
+# Keywords
+
+Poker
+
+Texas Holdem
+
+Deck
+
+Shuffle
+
+Deal
+
+Player
+
+Bot
+
+Dealer
+
+Blind
+
+Small Blind
+
+Big Blind
+
+Pot
+
+Side Pot
+
+Board
+
+Community Cards
+
+Flop
+
+Turn
+
+River
+
+Showdown
+
+Winner
+
+Pair
+
+Two Pair
+
+Three of a Kind
+
+Straight
+
+Flush
+
+Full House
+
+Four of a Kind
+
+Straight Flush
+
+Royal Flush
+
+Call
+
+Check
+
+Raise
+
+Fold
+
+All-in
+
+Engine
+
+Render
+
+DOM
+
+Blueprint
+
+State Machine
+
+Game State
+
+---
+
+# Module Dependencies
+
+appender.js
+
+↓
+
+render.js
+
+↓
+
+game-logic.js
+
+↓
+
+game-func.js
+
+↓
+
+utils.js
+
+(index.html loads all modules)
+
+---
+
+# Design Principles
+
+- Game rules belong to **game-func.js**.
+- Game flow belongs to **PokerEngine**.
+- UI rendering belongs to **render.js**.
+- DOM creation belongs to **appender.js**.
+- UI notifications belong to **utils.js**.
+- `PokerEngine.gameState` is the primary game state container.
+- `renderCardsTo()` is the canonical card rendering function.
+- `getBestCombination()` is the canonical 7-card hand evaluator.
+- `evaluateFiveCards()` is the canonical 5-card evaluator.
+- `dealCards()` is the canonical dealing function.
+- `tasov()` is responsible for deck creation and shuffle.
+
+---
+
+# Project Goal
+
+Develop a modular Texas Hold'em engine that cleanly separates:
+
+- game state
+- poker mechanics
+- rendering
+- UI
+- utility functions
+
+to allow future expansion with new gameplay modes, AI improvements, and DLC features without major architectural changes.
+
+//----------------------------
+//каждый раз, когда в проекте появляется новая крупная механика (например, твое DLC), мы не переписываем его, а добавляем в конец отдельный раздел:
+
+# Changelog
+
+## v0.6
+- Added side pots
+- Added all-in support
+
+## v0.7
+- Added dealer rotation
+- Added betting engine
+
+## DLC: Story Mode
+- New NPC system
+- Dialogue manager
+- Story triggers
+- Quest flags

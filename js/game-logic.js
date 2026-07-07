@@ -62,7 +62,7 @@ const BOT_PROFILES = {
 
 // 3. СВЯЗЫВАЕМ СТАРТОВЫЙ МАССИВ ИГРОКОВ С ПРОФИЛЯМИ
 let players = [
-    { id: 'player', name: 'Вы', budget: 100, cards: [] },
+    { id: 'player', name: 'Вы', budget: 10, cards: [] },
     { id: 'bot-1', name: BOT_PROFILES['bot-1'].name, budget: 100, strategy: BOT_PROFILES['bot-1'].style, cards: [] },
     { id: 'bot-2', name: BOT_PROFILES['bot-2'].name, budget: 100, strategy: BOT_PROFILES['bot-2'].style, cards: [] },
     { id: 'bot-3', name: BOT_PROFILES['bot-3'].name, budget: 100, strategy: BOT_PROFILES['bot-3'].style, cards: [] }
@@ -593,8 +593,21 @@ const PokerEngine = {
     },
 
     checkTableBankruptcy() {
+        // =========================================================================
+        // ЖЕСТКАЯ ЗАЩИТА: Выбивать или спасать можно ТОЛЬКО когда раздача ОКОНЧЕНА.
+        // Если идет PREFLOP, FLOP, TURN или RIVER — игроки с 0 балансом сидят в All-In!
+        // =========================================================================
+        if (PokerEngine && PokerEngine.gameState) {
+            const currentStreet = PokerEngine.gameState.street;
+            if (currentStreet !== 'SHOWDOWN' && currentStreet !== 'END_HAND') {
+                console.log(`[TOURNAMENT]: Защита All-In активна. Улица: ${currentStreet}. Проверка банкротства пропущена.`);
+                return false;
+            }
+        }
+
         let activeCount = 0;
 
+        // Первичный подсчет живых игроков
         players.forEach(p => {
             const selector = p.id === 'player' ? '.player' : `#${p.id}`;
             const el = document.querySelector(selector);
@@ -614,7 +627,6 @@ const PokerEngine = {
         // 1. ИНТЕРАКТИВНЫЙ ФИНАЛ: ТУРНИР ОПРЕДЕЛИЛ ПОБЕДИТЕЛЯ (ОСТАЛСЯ 1 ИГРОК)
         // =========================================================================
         if (activeCount === 1) {
-            // Гарантированно глушим любые фоновые таймеры ботов при конце игры
             if (this.gameState && this.gameState.botTimer) {
                 clearTimeout(this.gameState.botTimer);
                 this.gameState.botTimer = null;
@@ -622,117 +634,161 @@ const PokerEngine = {
 
             const winner = players.find(p => p.budget > 0);
 
-            // Если победил бот (ИИ обыграл всех)
             if (winner.id !== 'player') {
                 showMessage_(`🏆 ТУРНИР ЗАВЕРШЕН! Победитель: ${winner.name}!`, 10000);
                 return true;
             }
 
-            // ЕСЛИ ПОБЕДИЛ ЧЕЛОВЕК:
             const losers = players.filter(p => p.id !== 'player').map(p => p.name).join(', ');
-            const victoryText = `🏆 Поздравляем! Вы обыграли всех (${losers}). Боты ушли занимать на проезд домой. За стол готовы сесть новые лица с чистыми 100$.`;
+            const victoryText = `🏆 Поздравляем! Вы обыграли всех (${losers}). Новые лица уже за столом!`;
 
             showMessage_(victoryText, 12000);
 
-            // Выкатываем стильное диалоговое окно через 5 секунд триумфа
             setTimeout(async () => {
                 const playAgain = await showCustomConfirm("За Клубный Стол приглашаются новые лица! Готов рискнуть бюджетом?");
-
-                if (playAgain) {
-                    if (typeof startNextTournamentRound === 'function') {
-                        startNextTournamentRound();
-                    }
-                } else {
-                    console.log("[TOURNAMENT]: Игрок решил остаться королем горы и завершил сессию.");
-                    showMessage_("Сессия завершена. Вы ушли непобежденным! 👑", 5000);
+                if (playAgain && typeof startNextTournamentRound === 'function') {
+                    startNextTournamentRound();
                 }
             }, 5000);
 
-            return true; // Останавливаем стандартный запуск следующей раздачи
+            return true;
         }
 
         // =========================================================================
-        // 2. ДУШЕВНЫЙ ПЕРЕХВАТ: ЕСЛИ ИГРОК ПРОИГРАЛ ВСЕ ФИШКИ
+        // 2. ДУШЕВНЫЙ ПЕРЕХВАТ: ЕСЛИ КТО-ТО ОБАНКРОТИЛСЯ (ПОСЛЕ ВСКРЫТИЯ КАРТ)
         // =========================================================================
         const playerObj = players.find(p => p.id === 'player');
-        if (playerObj && playerObj.budget <= 0) {
+        const luckyReceiver = players.find(p => p.budget <= 0);
 
-            // Проверка сюжетного DLC спасения
-            if (!StoryState.mihalichSavedPlayer && Math.random() < 0.5) {
+        if (luckyReceiver && !StoryState.mihalichSavedPlayer && Math.random() < 0.5) {
+
+            // ИЩЕМ ДОНОРОВ: Исключаем игрока, саму цель и бота 404
+            const kindBots = players.filter(p =>
+                p.id !== 'player' &&
+                p.id !== luckyReceiver.id &&
+                p.name !== '404' &&
+                !p.id.includes('404') &&
+                p.budget >= 15
+            );
+
+            if (kindBots.length > 0) {
                 StoryState.mihalichSavedPlayer = true;
 
-                // Ищем живых ботов с деньгами (кроме бедного 404)
-                const kindBots = players.filter(p => p.id !== 'player' && p.name !== '404' && p.budget >= 5);
+                const saviorBot = kindBots[Math.floor(Math.random() * kindBots.length)];
+                console.log(`[STORY]: Бот ${saviorBot.name} запускает сцену спасения для ${luckyReceiver.name}.`);
 
-                if (kindBots.length > 0) {
-                    const saviorBot = kindBots[Math.floor(Math.random() < kindBots.length)];
-                    console.log(`[STORY]: Бот ${saviorBot.name} запускает сцену спасения игрока.`);
-
-                    // МГНОВЕННО фиксируем балансы в памяти
-                    saviorBot.budget -= 5;
-                    playerObj.budget = 5;
-
-                    // Приглушаем кнопки управления на время кат-сцены
-                    const actionPanel = document.querySelector('.action-buttons, .controls');
-                    if (actionPanel) {
-                        actionPanel.style.opacity = '0.1';
-                        actionPanel.style.pointerEvents = 'none';
+                // А. УНИВЕРСАЛЬНАЯ ФУНКЦИЯ ОБНОВЛЕНИЯ DOM
+                const updateVisualBalance = (pObject, newBalance) => {
+                    if (pObject.id === 'player') {
+                        const myBalanceSpan = document.getElementById('p-balance') || document.querySelector('#p-balance');
+                        if (myBalanceSpan) {
+                            myBalanceSpan.innerText = ` ${newBalance} $`;
+                        }
                     }
 
-                    // Подготовка реплик
-                    const phrases = {
-                        'Михалыч': "Держи 5$. Посиди ещё немного с нами. Весело с тобой...",
-                        'Ветал': "Да ладно тебе, не уходи. Возьми пятерку, бро.",
-                        'Андрей': "Куда собрался? На вот пять баксов, погнали дальше."
-                    };
-                    const botPhrase = phrases[saviorBot.name] || `Держи 5$, земляк. Рано тебе еще вылетать, посиди с нами.`;
+                    let el = document.getElementById(pObject.id) || document.querySelector(pObject.id.startsWith('#') ? pObject.id : `#${pObject.id}`);
+                    if (!el && pObject.id === 'player') el = document.querySelector('.player');
 
-                    // Шаг 1: Бот берет слово, фишки МГНОВЕННО перетекают в DOM
-                    setTimeout(() => {
-                        botSay(`#${saviorBot.id}`, botPhrase, 7500);
-
-                        if (typeof PokerEngine !== 'undefined' && PokerEngine.render) {
-                            PokerEngine.render();
-                        } else if (typeof renderCardsTo === 'function') {
-                            renderCardsTo();
+                    if (!el) {
+                        const allSeats = document.querySelectorAll('.player, .bot, .player-seat, [class*="bot"]');
+                        for (let seat of allSeats) {
+                            if (seat.textContent.includes(pObject.name)) { el = seat; break; }
                         }
-                    }, 1500);
+                    }
 
-                    // Шаг 2: Даем прочитать текст, возвращаем интерфейс в чувство и стартуем новую раздачу
-                    // 1500ms (до реплики) + 4000ms (на чтение) = 5500ms общая задержка от старта
-                    setTimeout(() => {
-                        if (actionPanel) {
-                            actionPanel.style.opacity = '1';
-                            actionPanel.style.pointerEvents = 'auto';
-                        }
+                    if (el) {
+                        el.classList.remove('eliminated');
+                        el.style.opacity = '1';
+                        const balanceEl = el.querySelector('[id*="balance"]') || el.querySelector('.balance') || el.querySelector('.player-balance');
+                        if (balanceEl) balanceEl.textContent = `${newBalance}$`;
+                    }
+                };
 
-                        // Закрепляющий финальный рендер
-                        if (typeof PokerEngine !== 'undefined' && PokerEngine.render) {
-                            PokerEngine.render();
-                        }
+                // Б. МГНОВЕННО фиксируем балансы в памяти
+                saviorBot.budget -= 10;
+                luckyReceiver.budget = 10;
 
-                        // Перезапуск раздачи
-                        if (typeof startNewHand === 'function') {
-                            startNewHand();
-                        } else if (this.startHand) {
-                            this.startHand();
-                        }
+                // В. МГНОВЕННО перерисовываем интерфейс балансов
+                updateVisualBalance(luckyReceiver, 10);
+                updateVisualBalance(saviorBot, saviorBot.budget);
 
-                        console.log(`[STORY]: Сцена спасения игрока успешно завершена. Раздача пошла.`);
-                    }, 5500);
+                // =========================================================================
+                // ЖЕСТКАЯ РЕАНИМАЦИЯ: Возвращаем тебя в список живых для PokerEngine
+                // =========================================================================
+                if (PokerEngine && PokerEngine.gameState) {
+                    PokerEngine.gameState.pot = 0;
+                    PokerEngine.gameState.currentBet = 0;
+                    PokerEngine.gameState.roundBets = {};
+                    PokerEngine.gameState.totalBets = {};
 
-                    return false; // Защищаем от вылета, игра продолжается!
+                    if (Array.isArray(PokerEngine.gameState.foldedPlayers)) {
+                        PokerEngine.gameState.foldedPlayers = PokerEngine.gameState.foldedPlayers.filter(id => id !== luckyReceiver.id && id !== 'player');
+                    }
+                    if (Array.isArray(PokerEngine.gameState.actedPlayers)) {
+                        PokerEngine.gameState.actedPlayers = [];
+                    }
+                    PokerEngine.gameState.street = 'PREFLOP';
                 }
-            }
 
-            // СТАНДАРТНЫЙ ВЫЛЕТ ИЗ ТУРНИРА (если никто не спас)
-            const actionPanel = document.querySelector('.action-buttons, .controls');
-            if (actionPanel) {
-                actionPanel.style.opacity = '0.1';
-                actionPanel.style.pointerEvents = 'none';
+                if (typeof PokerEngine !== 'undefined' && PokerEngine.render) {
+                    try { PokerEngine.render(); } catch (e) { console.warn(e); }
+                }
+
+                // Г. Формируем душевные реплики
+                let botPhrase = '';
+                if (luckyReceiver.id === 'player') {
+                    const phrases = {
+                        'Михалыч': "Держи червонец. Посиди ещё немного с нами. Весело с тобой...",
+                        'Ветал': "Да ладно тебе, не уходи. Возьми десятку, бро, отыграешься.",
+                        'Андрей': "Куда собрался? На вот 10 баксов, погнали дальше."
+                    };
+                    botPhrase = phrases[saviorBot.name] || `Держи 10$, земляк. Рано тебе еще вылетать!`;
+                } else {
+                    if (saviorBot.name === 'Ветал' && luckyReceiver.name === '404') {
+                        botPhrase = "Эй, 404, не грусти! Держи червонец ❤️ Нам без тебя скучно будет.";
+                    } else {
+                        botPhrase = `${luckyReceiver.name}, держи десятку от меня. Клуб не отпускает так просто!`;
+                    }
+                }
+
+                // Шаг 1: Бот берет слово через секунду
+                setTimeout(() => {
+                    const formattedBotId = saviorBot.id.startsWith('#') ? saviorBot.id : `#${saviorBot.id}`;
+                    botSay(formattedBotId, botPhrase, 4000);
+
+                    if (saviorBot.name === 'Ветал' && luckyReceiver.name === '404' && typeof spawnHeartBetween === 'function') {
+                        spawnHeartBetween('#bot-2', '#bot-3');
+                    }
+                }, 1000);
+
+                // Шаг 2: Запускаем новую раздачу и ЖЕСТКО гарантируем чистый CSS-доступ к кнопкам
+                setTimeout(() => {
+                    // Убеждаемся, что никакие старые стили не блокируют клики по кнопкам на столе
+                    const actionPanel = document.querySelector('.action-buttons, .controls');
+                    if (actionPanel) {
+                        actionPanel.style.opacity = '1';
+                        actionPanel.style.pointerEvents = 'auto';
+                    }
+
+                    const boardEl = document.querySelector('#board');
+                    if (boardEl) boardEl.innerHTML = '';
+
+                    if (typeof PokerEngine !== 'undefined' && PokerEngine.render) {
+                        try { PokerEngine.render(); } catch (e) { console.warn(e); }
+                    }
+
+                    // Стартуем чистый раунд
+                    if (typeof startNewHand === 'function') {
+                        startNewHand();
+                    } else if (this.startHand) {
+                        this.startHand();
+                    }
+
+                    console.log(`[STORY]: Сцена спасения успешно завершена. Новая раздача пошла.`);
+                }, 5500);
+
+                return true;
             }
-            showMessage_("💸 Вы вылетели из турнира! Игра окончена.", 7000);
-            return true;
         }
 
         return false;

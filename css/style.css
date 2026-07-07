@@ -644,7 +644,8 @@ button {
 .player.eliminated::after {
 	content: "ВЫ ВЫБЫЛИ";
 	position: absolute;
-	top: 35%;
+	top: 15%;
+	/* 35% */
 	/* Чуть выше кнопок, чтобы перекрывать именно карты */
 	left: 50%;
 	transform: translate(-50%, -50%) rotate(-8deg);
@@ -991,7 +992,9 @@ button {
 		top: -18px;
 	}
 
-
+	.player.eliminated::after {
+		top: 35%;
+	}
 
 
 }
