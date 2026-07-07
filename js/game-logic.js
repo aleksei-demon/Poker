@@ -596,7 +596,7 @@ const PokerEngine = {
         let activeCount = 0;
 
         players.forEach(p => {
-            let selector = p.id === 'player' ? '.player' : `#${p.id}`;
+            const selector = p.id === 'player' ? '.player' : `#${p.id}`;
             const el = document.querySelector(selector);
 
             if (p.budget <= 0) {
@@ -611,45 +611,39 @@ const PokerEngine = {
         });
 
         // =========================================================================
-        // ИНТЕРАКТИВНЫЙ ФИНАЛ: ЕСЛИ ИГРОК ВЫИГРАЛ ТУРНИР
+        // 1. ИНТЕРАКТИВНЫЙ ФИНАЛ: ТУРНИР ОПРЕДЕЛИЛ ПОБЕДИТЕЛЯ (ОСТАЛСЯ 1 ИГРОК)
         // =========================================================================
         if (activeCount === 1) {
-            const winner = players.find(p => p.budget > 0);
-
-            // Если победил бот (мало ли), просто стопаем игру
-            if (winner.id !== 'player') {
-                if (this.gameState.botTimer) {
-                    clearTimeout(this.gameState.botTimer);
-                    this.gameState.botTimer = null;
-                }
-                showMessage_(`🏆 ТУРНИР ЗАВЕРШЕН! Победитель: ${winner.name}!`, 10000);
-                return true;
-            }
-
-            // ЕСЛИ ПОБЕДИЛ ЧЕЛОВЕК (НАШ СЦЕНАРИЙ):
-            if (this.gameState.botTimer) {
+            // Гарантированно глушим любые фоновые таймеры ботов при конце игры
+            if (this.gameState && this.gameState.botTimer) {
                 clearTimeout(this.gameState.botTimer);
                 this.gameState.botTimer = null;
             }
 
-            // Формируем сочный текст с именами проигравших
-            const losers = players.filter(p => p.id !== 'player').map(p => p.name).join(', ');
-            const victoryText = `🏆  (${losers})! ушли пить пиво и занимать на проезд домой. За стол готовы сесть новые игроки с чистыми 100$.`;
+            const winner = players.find(p => p.budget > 0);
 
-            // Выводим сообщение на экран
+            // Если победил бот (ИИ обыграл всех)
+            if (winner.id !== 'player') {
+                showMessage_(`🏆 ТУРНИР ЗАВЕРШЕН! Победитель: ${winner.name}!`, 10000);
+                return true;
+            }
+
+            // ЕСЛИ ПОБЕДИЛ ЧЕЛОВЕК:
+            const losers = players.filter(p => p.id !== 'player').map(p => p.name).join(', ');
+            const victoryText = `🏆 Поздравляем! Вы обыграли всех (${losers}). Боты ушли занимать на проезд домой. За стол готовы сесть новые лица с чистыми 100$.`;
+
             showMessage_(victoryText, 12000);
 
-            // Через 5 секунд, когда игрок прочитает текст, выкатываем системное предложение
-            // Через 5 секунд, когда игрок прочитает текст триумфа, выкатываем стильное предложение
+            // Выкатываем стильное диалоговое окно через 5 секунд триумфа
             setTimeout(async () => {
                 const playAgain = await showCustomConfirm("За Клубный Стол приглашаются новые лица! Готов рискнуть бюджетом?");
 
                 if (playAgain) {
-                    // Перезапускаем турнирный раунд со сменой ботов
-                    startNextTournamentRound();
+                    if (typeof startNextTournamentRound === 'function') {
+                        startNextTournamentRound();
+                    }
                 } else {
                     console.log("[TOURNAMENT]: Игрок решил остаться королем горы и завершил сессию.");
-                    // Сюда можно повесить редирект в главное меню или легкое затемнение стола
                     showMessage_("Сессия завершена. Вы ушли непобежденным! 👑", 5000);
                 }
             }, 5000);
@@ -657,89 +651,87 @@ const PokerEngine = {
             return true; // Останавливаем стандартный запуск следующей раздачи
         }
 
-        // Если сам игрок проиграл все фишки
+        // =========================================================================
+        // 2. ДУШЕВНЫЙ ПЕРЕХВАТ: ЕСЛИ ИГРОК ПРОИГРАЛ ВСЕ ФИШКИ
+        // =========================================================================
         const playerObj = players.find(p => p.id === 'player');
         if (playerObj && playerObj.budget <= 0) {
 
-            // =============================================================================
-            //  STORY DLC: УНИВЕРСАЛЬНЫЙ ДУШЕВНЫЙ ПЕРЕХВАТ (С МГНОВЕННЫМ ОБНОВЛЕНИЕМ DOM)
-            // =============================================================================
+            // Проверка сюжетного DLC спасения
             if (!StoryState.mihalichSavedPlayer && Math.random() < 0.5) {
                 StoryState.mihalichSavedPlayer = true;
 
-                // Ищем всех живых ботов с бюджетом >= 5, исключая "404"
+                // Ищем живых ботов с деньгами (кроме бедного 404)
                 const kindBots = players.filter(p => p.id !== 'player' && p.name !== '404' && p.budget >= 5);
 
                 if (kindBots.length > 0) {
-                    const saviorBot = kindBots[Math.floor(Math.random() * kindBots.length)];
+                    const saviorBot = kindBots[Math.floor(Math.random() < kindBots.length)];
+                    console.log(`[STORY]: Бот ${saviorBot.name} запускает сцену спасения игрока.`);
 
-                    console.log(`[STORY]: Бот ${saviorBot.name} решает спасти игрока!`);
-
-                    // МГНОВЕННО пересчитываем балансы в памяти
+                    // МГНОВЕННО фиксируем балансы в памяти
                     saviorBot.budget -= 5;
                     playerObj.budget = 5;
 
-                    // Приглушаем кнопки управления
+                    // Приглушаем кнопки управления на время кат-сцены
                     const actionPanel = document.querySelector('.action-buttons, .controls');
                     if (actionPanel) {
                         actionPanel.style.opacity = '0.1';
                         actionPanel.style.pointerEvents = 'none';
                     }
 
+                    // Подготовка реплик
                     const phrases = {
                         'Михалыч': "Держи 5$. Посиди ещё немного с нами. Весело с тобой...",
                         'Ветал': "Да ладно тебе, не уходи. Возьми пятерку, бро.",
-                        'Андрей': "Куда собрался? На вот пять баксов, погнали дальше. "
+                        'Андрей': "Куда собрался? На вот пять баксов, погнали дальше."
                     };
-
                     const botPhrase = phrases[saviorBot.name] || `Держи 5$, земляк. Рано тебе еще вылетать, посиди с нами.`;
 
-                    // Шаг 1: Показываем реплику и ОДНОВРЕМЕННО обновляем цифры на экране
+                    // Шаг 1: Бот берет слово, фишки МГНОВЕННО перетекают в DOM
                     setTimeout(() => {
                         botSay(`#${saviorBot.id}`, botPhrase, 7500);
 
-                        // ТРИГГЕР ДЛЯ DOM: Фишки визуально перетекают к игроку прямо в момент начала фразы!
                         if (typeof PokerEngine !== 'undefined' && PokerEngine.render) {
                             PokerEngine.render();
                         } else if (typeof renderCardsTo === 'function') {
                             renderCardsTo();
                         }
-
-                        // Шаг 2: Ждем, пока игрок прочитает текст, возвращаем управление и запускаем новую раздачу
-                        setTimeout(() => {
-                            if (actionPanel) {
-                                actionPanel.style.opacity = '1';
-                                actionPanel.style.pointerEvents = 'auto';
-                            }
-
-                            // Закрепляющий рендер стола
-                            if (typeof PokerEngine !== 'undefined' && PokerEngine.render) {
-                                PokerEngine.render();
-                            }
-
-                            // Запускаем чистую раздачу с новыми бюджетами
-                            if (typeof startNewHand === 'function') {
-                                startNewHand();
-                            } else if (typeof PokerEngine !== 'undefined' && PokerEngine.startHand) {
-                                PokerEngine.startHand();
-                            }
-
-                            console.log(`[STORY]: Игрок спасен ботом ${saviorBot.name}. Раздача запущена.`);
-                        }, 3500);
-
                     }, 1500);
 
-                    return false; // Защита от стандартного вылета
+                    // Шаг 2: Даем прочитать текст, возвращаем интерфейс в чувство и стартуем новую раздачу
+                    // 1500ms (до реплики) + 4000ms (на чтение) = 5500ms общая задержка от старта
+                    setTimeout(() => {
+                        if (actionPanel) {
+                            actionPanel.style.opacity = '1';
+                            actionPanel.style.pointerEvents = 'auto';
+                        }
+
+                        // Закрепляющий финальный рендер
+                        if (typeof PokerEngine !== 'undefined' && PokerEngine.render) {
+                            PokerEngine.render();
+                        }
+
+                        // Перезапуск раздачи
+                        if (typeof startNewHand === 'function') {
+                            startNewHand();
+                        } else if (this.startHand) {
+                            this.startHand();
+                        }
+
+                        console.log(`[STORY]: Сцена спасения игрока успешно завершена. Раздача пошла.`);
+                    }, 5500);
+
+                    return false; // Защищаем от вылета, игра продолжается!
                 }
             }
 
-            // СТАНДАРТНЫЙ ВЫЛЕТ
+            // СТАНДАРТНЫЙ ВЫЛЕТ ИЗ ТУРНИРА (если никто не спас)
             const actionPanel = document.querySelector('.action-buttons, .controls');
             if (actionPanel) {
                 actionPanel.style.opacity = '0.1';
                 actionPanel.style.pointerEvents = 'none';
             }
-            showMessage_("💸 Вы вылетели из турнира! Игра окончена.", 7000); //
+            showMessage_("💸 Вы вылетели из турнира! Игра окончена.", 7000);
             return true;
         }
 
@@ -1011,45 +1003,49 @@ function runBotLogic(botId) {
 
     // Если бот пуст, выбыл или у него кончились фишки — автоматический фолд
     if (!botObj || botObj.budget <= 0) {
-        PokerEngine.executeAction(botId, 'FOLD');
+        if (typeof PokerEngine !== 'undefined') PokerEngine.executeAction(botId, 'FOLD');
         return;
     }
 
-    // Достаем профиль для блефов/агрессии, а имя и стиль берем ОФИЦИАЛЬНЫЕ из объекта игрока
     const profile = BOT_PROFILES[botId] || {};
     const botName = botObj.name;
-    const style = botObj.strategy || 'GTO'; // Единственное объявление style на всю функцию!
+    const style = botObj.strategy || 'GTO';
 
     // =================================================================================
     // 2. СОБИРАЕМ КАРТЫ ДЛЯ АНАЛИЗА
     // =================================================================================
-    const boardCards = PokerEngine.gameState.board || [];
+    const boardCards = (PokerEngine && PokerEngine.gameState) ? PokerEngine.gameState.board : [];
     const sevenCards = [...(botObj.cards || []), ...boardCards];
 
     let handStrength = 0.15; // Дефолтная сила (мусор)
     let handName = "Старшая карта";
+    const currentStreet = (PokerEngine && PokerEngine.gameState) ? PokerEngine.gameState.street : 'PREFLOP';
 
     // =================================================================================
-    // 3. УМНОЕ РАСПРЕДЕЛЕНИЕ ОЦЕНКИ ПО УЛИЦАМ (ПОД НОВЫЕ МИЛЛИОНЫ)
+    // 3. УМНОЕ РАСПРЕДЕЛЕНИЕ ОЦЕНКИ ПО УЛИЦАМ
     // =================================================================================
-    if (PokerEngine.gameState.street === 'PREFLOP') {
-        handStrength = evaluatePreflopHand(botObj.cards);
+    if (currentStreet === 'PREFLOP') {
+        if (typeof evaluatePreflopHand === 'function') {
+            handStrength = evaluatePreflopHand(botObj.cards);
+        }
         handName = "Стартовые карты";
     }
-    else if (PokerEngine.gameState.street === 'FLOP') {
+    else if (currentStreet === 'FLOP') {
         try {
-            const flopEval = evaluateFiveCards(sevenCards);
-            if (flopEval && typeof flopEval.score !== 'undefined') {
-                const score = flopEval.score;
-                handName = flopEval.name;
+            if (typeof evaluateFiveCards === 'function') {
+                const flopEval = evaluateFiveCards(sevenCards);
+                if (flopEval && typeof flopEval.score !== 'undefined') {
+                    const score = flopEval.score;
+                    handName = flopEval.name;
 
-                if (score >= 60000000) handStrength = 0.95;      // Фулл-Хаус+
-                else if (score >= 50000000) handStrength = 0.85; // Флеш
-                else if (score >= 40000000) handStrength = 0.80; // Стрит
-                else if (score >= 30000000) handStrength = 0.75; // Сет
-                else if (score >= 20000000) handStrength = 0.65; // Две пары
-                else if (score >= 10000000) handStrength = 0.45; // Пара
-                else handStrength = 0.20;
+                    if (score >= 60000000) handStrength = 0.95;      // Фулл-Хаус+
+                    else if (score >= 50000000) handStrength = 0.85; // Флеш
+                    else if (score >= 40000000) handStrength = 0.80; // Стрит
+                    else if (score >= 30000000) handStrength = 0.75; // Сет
+                    else if (score >= 20000000) handStrength = 0.65; // Две пары
+                    else if (score >= 10000000) handStrength = 0.45; // Пара
+                    else handStrength = 0.20;
+                }
             }
         } catch (e) {
             console.warn(`[BOT-AI] Сбой калькулятора флопа для ${botId}:`, e);
@@ -1058,20 +1054,22 @@ function runBotLogic(botId) {
     }
     else {
         try {
-            const handEval = getBestCombination(sevenCards);
-            if (handEval && typeof handEval.score !== 'undefined') {
-                const handScore = handEval.score;
-                handName = handEval.name;
+            if (typeof getBestCombination === 'function') {
+                const handEval = getBestCombination(sevenCards);
+                if (handEval && typeof handEval.score !== 'undefined') {
+                    const handScore = handEval.score;
+                    handName = handEval.name;
 
-                if (handScore >= 80000000) handStrength = 0.98;      // Стрит-Флеш
-                else if (handScore >= 70000000) handStrength = 0.95; // Каре
-                else if (handScore >= 60000000) handStrength = 0.90; // Фулл-Хаус
-                else if (handScore >= 50000000) handStrength = 0.85; // Флеш
-                else if (handScore >= 40000000) handStrength = 0.80; // Стрит
-                else if (handScore >= 30000000) handStrength = 0.70; // Сет
-                else if (handScore >= 20000000) handStrength = 0.55; // Две пары
-                else if (handScore >= 10000000) handStrength = 0.35; // Пара
-                else handStrength = 0.15;
+                    if (handScore >= 80000000) handStrength = 0.98;      // Стрит-Флеш
+                    else if (handScore >= 70000000) handStrength = 0.95; // Каре
+                    else if (handScore >= 60000000) handStrength = 0.90; // Фулл-Хаус
+                    else if (handScore >= 50000000) handStrength = 0.85; // Флеш
+                    else if (handScore >= 40000000) handStrength = 0.80; // Стрит
+                    else if (handScore >= 30000000) handStrength = 0.70; // Сет
+                    else if (handScore >= 20000000) handStrength = 0.55; // Две пары
+                    else if (handScore >= 10000000) handStrength = 0.35; // Пара
+                    else handStrength = 0.15;
+                }
             }
         } catch (e) {
             console.warn(`[BOT-AI] Сбой getBestCombination для ${botId}:`, e);
@@ -1082,11 +1080,16 @@ function runBotLogic(botId) {
     // =================================================================================
     // 4. РАСЧЕТ ЭКОНОМИКИ СТОЛА
     // =================================================================================
-    const alreadyBet = PokerEngine.gameState.roundBets[botId] || 0;
-    const callAmount = PokerEngine.gameState.currentBet - alreadyBet;
-    const currentPot = PokerEngine.gameState.pot;
+    const roundBets = (PokerEngine && PokerEngine.gameState) ? PokerEngine.gameState.roundBets : {};
+    const currentBet = (PokerEngine && PokerEngine.gameState) ? PokerEngine.gameState.currentBet : 0;
+    const currentPot = (PokerEngine && PokerEngine.gameState) ? PokerEngine.gameState.pot : 0;
 
-    const potOdds = callAmount / (currentPot + callAmount || 1);
+    const alreadyBet = roundBets[botId] || 0;
+    const callAmount = currentBet - alreadyBet;
+
+    // Безопасный расчет шансов банка (без деления на 0)
+    const totalPotExpectation = currentPot + callAmount;
+    const potOdds = totalPotExpectation > 0 ? (callAmount / totalPotExpectation) : 0;
 
     // =================================================================================
     // 5. МОДИФИКАЦИЯ ПОВЕДЕНИЯ НА ОСНОВЕ УНИКАЛЬНОГО ХАРАКТЕРА
@@ -1094,7 +1097,6 @@ function runBotLogic(botId) {
     let randomFactor = Math.random() * (profile.bluffChance || 0.1);
     const looseFactor = profile.looseFactor || 1.0;
 
-    // Внедряем характер в силу руки (переменная style берется из начала функции)
     let decisionScore = handStrength * looseFactor + randomFactor;
 
     if (style === 'RANDOM') {
@@ -1113,19 +1115,21 @@ function runBotLogic(botId) {
         }
     }
 
-    console.log(`[BOT-AI] ${botName} (${style}) думает на ${PokerEngine.gameState.street}. Рука: ${handName}, Итоговая Сила: ${decisionScore.toFixed(2)}, Шансы банка: ${potOdds.toFixed(2)}`);
+    console.log(`[BOT-AI] ${botName} (${style}) думает на ${currentStreet}. Рука: ${handName}, Итоговая Сила: ${decisionScore.toFixed(2)}, Шансы банка: ${potOdds.toFixed(2)}`);
 
     // =================================================================================
-    // 6. ЛОГИКА ДЕЙСТВИЙ
+    // 6. ЛОГИКА ДЕЙСТВИЙ И ЗАЩИТА СТЭКОВ
     // =================================================================================
     const agg = profile.aggression || 1.0;
 
-    // СПЕЦИАЛЬНЫЙ РЕЖИМ БОТА "БОЛТ"
+    // СПЕЦИАЛЬНЫЙ РЕЖИМ БОТА "БОЛТ" (С ПОЛНОЙ ВАЛИДАЦИЕЙ)
     if (style === 'BOLT') {
-        const activePlayers = players.filter(p => p.budget > 0);
-        const minBudget = Math.min(...activePlayers.map(p => p.budget));
+        const activePlayers = players.filter(p => p.budget > 0 && p.id !== botId);
+        const minBudget = activePlayers.length > 0 ? Math.min(...activePlayers.map(p => p.budget)) : 20;
 
-        const targetBet = minBudget;
+        // Гарантируем, что targetBet не равен нулю и адекватен
+        let targetBet = Math.max(minBudget, currentBet + 10);
+
         if (targetBet >= botObj.budget) {
             PokerEngine.executeAction(botId, 'ALL-IN');
             return;
@@ -1134,7 +1138,7 @@ function runBotLogic(botId) {
         if (callAmount <= 0) {
             PokerEngine.executeAction(botId, 'RAISE', targetBet);
         } else {
-            if (PokerEngine.gameState.currentBet < targetBet) {
+            if (currentBet < targetBet) {
                 PokerEngine.executeAction(botId, 'RAISE', targetBet);
             } else {
                 PokerEngine.executeAction(botId, 'CALL');
@@ -1152,15 +1156,26 @@ function runBotLogic(botId) {
 
         if (decisionScore > 0.65 || style === 'AGRESSIVE') {
             const raiseSize = Math.round(20 * agg);
-            PokerEngine.executeAction(botId, 'RAISE', raiseSize);
+            // Защита: Если рейз съедает стек, идем All-In
+            if (raiseSize >= botObj.budget) {
+                PokerEngine.executeAction(botId, 'ALL-IN');
+            } else {
+                PokerEngine.executeAction(botId, 'RAISE', raiseSize);
+            }
         } else if (decisionScore > 0.4 && Math.random() < 0.3) {
-            PokerEngine.executeAction(botId, 'RAISE', 20);
+            const minRaise = 20;
+            if (minRaise >= botObj.budget) {
+                PokerEngine.executeAction(botId, 'ALL-IN');
+            } else {
+                PokerEngine.executeAction(botId, 'RAISE', minRaise);
+            }
         } else {
             PokerEngine.executeAction(botId, 'CHECK');
         }
     }
-    // Ситуация Б: Перед ботом стоит ставка
+    // Ситуация Б: Перед ботом стоит чья-то ставка
     else {
+        // Если цена колла больше или равна всему бюджету бота
         if (callAmount >= botObj.budget) {
             if (style === 'MATH') {
                 if (handStrength > potOdds && handStrength > 0.45) {
@@ -1179,17 +1194,25 @@ function runBotLogic(botId) {
             return;
         }
 
+        // Если бот хочет переповысить (Рейз/Трибет)
         if (decisionScore > 0.78 || style === 'AGRESSIVE') {
             if (Math.random() < 0.35 && botObj.budget < currentPot && style !== 'MATH') {
                 PokerEngine.executeAction(botId, 'ALL-IN');
             } else {
-                const raiseSize = Math.round(40 * agg);
-                PokerEngine.executeAction(botId, 'RAISE', raiseSize);
+                // Математически честный рейз: размер колла + сверху ставка
+                const raiseSize = currentBet + Math.round(40 * agg);
+                if (raiseSize >= botObj.budget) {
+                    PokerEngine.executeAction(botId, 'ALL-IN');
+                } else {
+                    PokerEngine.executeAction(botId, 'RAISE', raiseSize);
+                }
             }
         }
+        // Если бот готов коллировать
         else if (style === 'MATH' ? (handStrength > potOdds) : (decisionScore > potOdds || decisionScore > 0.36)) {
             PokerEngine.executeAction(botId, 'CALL');
         }
+        // Пасс
         else {
             PokerEngine.executeAction(botId, 'FOLD');
         }
@@ -1251,14 +1274,13 @@ function startNewHand() {
 
     if (botVetal && bot404 && bot404.budget <= 0 && !StoryState.vetalSaved404 && botVetal.budget >= 10) {
         StoryState.vetalSaved404 = true;
-
         console.log("[STORY]: Ветал замечает банкротство 404 и запускает сцену помощи!");
 
         // МГНОВЕННО выравниваем балансы в памяти
         botVetal.budget -= 5;
         bot404.budget = 5;
 
-        // Блокируем кнопки
+        // Блокируем элементы управления (защита от лишних кликов)
         const actionPanel = document.querySelector('.action-buttons, .controls');
         if (actionPanel) actionPanel.style.pointerEvents = 'none';
 
@@ -1269,12 +1291,11 @@ function startNewHand() {
         setTimeout(() => {
             botSay('#bot-2', "Держи, мне не сложно. Играй.", 3500);
 
-            // ТРИГГЕР ДЛЯ DOM: Обновляем интерфейс прямо СЕЙЧАС, 
-            // чтобы балансы изменились на плашках прямо во время полета сердечка!
+            // ТРИГГЕР ДЛЯ DOM: Обновляем балансы на плашках прямо во время полета сердечка
             if (typeof PokerEngine !== 'undefined' && PokerEngine.render) {
                 PokerEngine.render();
             } else if (typeof renderCardsTo === 'function') {
-                renderCardsTo(); // На случай, если рендер вызывается отдельно
+                renderCardsTo();
             }
 
             if (typeof spawnHeartBetween === 'function') {
@@ -1285,13 +1306,11 @@ function startNewHand() {
             setTimeout(() => {
                 if (actionPanel) actionPanel.style.pointerEvents = 'auto';
 
-                // Финальный закрепляющий рендер перед раздачей карт
                 if (typeof PokerEngine !== 'undefined' && PokerEngine.render) {
                     PokerEngine.render();
                 }
 
                 console.log("[STORY]: Сцена завершена. Принудительно пинаем движок префлопа.");
-
                 if (typeof PokerEngine !== 'undefined' && PokerEngine.initPreflop) {
                     PokerEngine.initPreflop();
                 }
@@ -1301,56 +1320,6 @@ function startNewHand() {
 
         return; // Мгновенно выходим, ждем завершения таймеров кат-сцены
     }
-    // ========================================================================
-
-    // =============================================================================
-    //  STORY DLC: СЕНТЯБРЬ — МЕСТНЫЙ СИНОПТИК И КАЛЕНДАРЬ
-    // =============================================================================
-    const septemberBot = players.find(p => p.name.trim() === 'Сентябрь');
-    if (septemberBot && StoryState.weatherLoaded && !StoryState.septemberCommentedWeather) {
-        StoryState.septemberCommentedWeather = true;
-
-        const w = StoryState.weatherData;
-        let phrase = "";
-
-        // ИГРАЕМ В НОВЫЙ ГОД? (31 декабря, 1 или 2 января)
-        if ((w.month === 12 && w.dayOfMonth === 31) || (w.month === 1 && (w.dayOfMonth === 1 || w.dayOfMonth === 2))) {
-            phrase = `С Новым годом, мужики!  Насыпайте фишки, под ёлочку пойдёт...`;
-        }
-        // ЕСЛИ НЕ НОВЫЙ ГОД — РАБОТАЕМ ПО ПОГОДЕ И КАЛЕНДАРЮ
-        else {
-            // Начало реплики: привязка ко дню недели
-            phrase = `Вот уже ${w.dayOfWeek}, время летит... `;
-
-            // Оцениваем температуру
-            if (w.temp < 0) phrase += `А на улице дубак конкретный, ${w.temp}°C. `;
-            else if (w.temp > 25) phrase += `А за окном пекло, ${w.temp}°C, дышать нечем. `;
-            else phrase += `Погода шепчет, ${w.temp}°C как-никак.`;
-
-            // Оцениваем облачность и дождь по кодам WMO
-            // 0 - ясно, 1-3 - переменная облачность, >50 - осадки (дождь/снег)
-            if (w.code >= 61 && w.code <= 67) {
-                phrase += `Ещё и дождь этот зарядил, мерзость. `;
-            } else if (w.code >= 1 && w.code <= 3) {
-                phrase += `Хоть тучи немного разогнало. `;
-            } else if (w.code === 0) {
-                phrase += `Солнце лупит прямо в монитор. `;
-            }
-
-            // Оцениваем силу ветра
-            if (w.wind > 10) {
-                phrase += `И ветрище ${w.wind} м/с, аж рамы трещат. `;
-            }
-
-            // Финал реплики в его стиле
-            phrase += ` Идеальный момент, чтобы катать покер.`;
-        }
-
-        // Выводим облачко через 2.5 секунды после раздачи карт
-        setTimeout(() => {
-            botSay(`#${septemberBot.id}`, phrase, 9000); // Даем 9 секунд, так как текст сочный и длинный
-        }, 2500);
-    }
     // =============================================================================
 
     // ПЕРВЫМ ДЕЛОМ проверяем, а не закончился ли турнир в прошлой раздаче?
@@ -1358,67 +1327,64 @@ function startNewHand() {
         const isGameOver = PokerEngine.checkTableBankruptcy();
         if (isGameOver) {
             console.log("[TOURNAMENT]: Запуск новой раздачи отменен. Турнир завершен.");
-            return; // МГНОВЕННО КУСАЕМ КОД, новая раздача не начнется!
+            return;
         }
     }
+
     console.log("=== ЧИСТКА СТОЛА И ПАМЯТИ ДЛЯ НОВОЙ РАЗДАЧИ ===");
 
-    // 1. Очищаем таймер ботов
-    if (PokerEngine && PokerEngine.gameState && PokerEngine.gameState.botTimer) {
-        clearTimeout(PokerEngine.gameState.botTimer);
-        PokerEngine.gameState.botTimer = null;
+    // 1. Очищаем висящие таймеры ботов, предотвращая наложение ходов
+    if (PokerEngine && PokerEngine.gameState) {
+        if (PokerEngine.gameState.botTimer) {
+            clearTimeout(PokerEngine.gameState.botTimer);
+            PokerEngine.gameState.botTimer = null;
+        }
+        // Сброс состояния игры в движке
+        PokerEngine.gameState.board = [];
+        PokerEngine.gameState.foldedPlayers = [];
+        PokerEngine.gameState.pot = 0;
+        PokerEngine.gameState.currentBet = 0;
+        PokerEngine.gameState.roundBets = {};
     }
-    PokerEngine.gameState.board = [];
-    players.forEach(p => {
-        p.cards = [];
-    });
-    // 2. Полностью вычищаем все дочерние узлы DOM во всех контейнерах карт
+
+    // 2. Обнуляем карманные карты в памяти у всех игроков (один чистый проход)
+    if (typeof players !== 'undefined' && Array.isArray(players)) {
+        players.forEach(p => { p.cards = []; });
+    }
+
+    // 3. Полностью вычищаем все дочерние узлы DOM во всех контейнерах карт
     const cardContainers = ['#board', '#cards-1', '#cards-2', '#cards-3', '#cards-p'];
     cardContainers.forEach(selector => {
         const el = document.querySelector(selector);
         if (el) {
-            el.innerHTML = ''; // Стираем все вложенные карты
-            el.style.opacity = '1'; // Возвращаем яркость живому игроку
+            el.innerHTML = '';
+            el.style.opacity = '1'; // Возвращаем яркость
         }
     });
 
-    // 3. Дополнительная страховка: если карты рендерятся внутри стола с общим классом .card
+    // 4. Дополнительная страховка: жесткое удаление карт из DOM
     document.querySelectorAll('.card').forEach(card => {
-        // Если это не карты внутри бокса выбывшего игрока, удаляем их
         if (!card.closest('.eliminated')) {
             card.remove();
         }
     });
 
-    // 4. Обнуляем карманные карты в памяти
-    if (typeof players !== 'undefined' && Array.isArray(players)) {
-        players.forEach(p => { p.cards = []; });
-    }
-
-    // 5. Сброс состояния игры в движке
-    if (PokerEngine && PokerEngine.gameState) {
-        PokerEngine.gameState.board = [];
-        PokerEngine.gameState.foldedPlayers = [];
-        PokerEngine.gameState.pot = 0;
-        PokerEngine.gameState.currentBet = 0;
-        // Очищаем ставки предыдущего раунда у всех игроков
-        PokerEngine.gameState.roundBets = {};
-    }
-
-    // 5. Показываем уведомление
+    // 5. Показываем системное уведомление
     if (typeof showMessage_ === 'function') {
         showMessage_("Новая раздача.", 2000);
     }
 
-    // 6. Перемешивание и сдвиг фишки Дилера
+    // 6. Перемешивание карт
     if (typeof tasov === 'function') tasov();
 
     if (typeof players !== 'undefined' && players.length > 0) {
         // Передаем фишку дилера СЛЕДУЮЩЕМУ ЖИВОМУ игроку
         CURRENT_DEALER = getNextActivePlayerIndex(CURRENT_DEALER);
 
-        // И сразу обновляем отображение фишки на столе
-        if (typeof updateDealerChipsUI === 'function') { updateDealerChipsUI(); }
+        // Обновляем отображение фишки дилера на столе
+        if (typeof updateDealerChipsUI === 'function') {
+            updateDealerChipsUI();
+        }
 
         // 7. Раздаем физические карты (Берем из глобального массива KOLODA)
         if (typeof dealCards === 'function') {
@@ -1429,7 +1395,45 @@ function startNewHand() {
         }
 
         // 8. Запускаем префлоп торговлю через движок
-        PokerEngine.initPreflop();
+        if (typeof PokerEngine !== 'undefined' && PokerEngine.initPreflop) {
+            PokerEngine.initPreflop();
+        }
+
+        // =============================================================================
+        //  STORY DLC: СЕНТЯБРЬ — МЕСТНЫЙ СИНОПТИК И КАЛЕНДАРЬ (ПЕРЕНЕСЕН В БЕЗОПАСНУЮ ЗОНУ)
+        // =============================================================================
+        const septemberBot = players.find(p => p.name.trim() === 'Сентябрь');
+        if (septemberBot && StoryState.weatherLoaded && !StoryState.septemberCommentedWeather) {
+            StoryState.septemberCommentedWeather = true;
+
+            const w = StoryState.weatherData;
+            let phrase = "";
+
+            if ((w.month === 12 && w.dayOfMonth === 31) || (w.month === 1 && (w.dayOfMonth === 1 || w.dayOfMonth === 2))) {
+                phrase = `С Новым годом, мужики! Насыпайте фишки, под ёлочку пойдёт...`;
+            } else {
+                phrase = `Вот уже ${w.dayOfWeek}, время летит... `;
+
+                if (w.temp < 0) phrase += `А на улице дубак конкретный, ${w.temp}°C. `;
+                else if (w.temp > 25) phrase += `А за окном пекло, ${w.temp}°C, дышать нечем. `;
+                else phrase += `Погода шепчет, ${w.temp}°C как-никак. `;
+
+                if (w.code >= 61 && w.code <= 67) phrase += `Ещё и дождь этот зарядил, мерзость. `;
+                else if (w.code >= 1 && w.code <= 3) phrase += `Хоть тучи немного разогнало. `;
+                else if (w.code === 0) phrase += `Солнце лупит прямо в монитор. `;
+
+                if (w.wind > 10) phrase += `И ветрище ${w.wind} м/с, аж рамы трещат. `;
+
+                phrase += `Идеальный момент, чтобы катать покер.`;
+            }
+
+            // Выводим облачко строго после того, как все карты на столе легли на места
+            setTimeout(() => {
+                botSay(`#${septemberBot.id}`, phrase, 9000);
+            }, 2500);
+        }
+        // =============================================================================
+
     } else {
         console.error("[CRITICAL]: Глобальный массив players не обнаружен!");
     }
