@@ -139,12 +139,19 @@ function renderCardsTo(cardsArray, target_id, isSecret = false) {
     // --- АВТОМАТИЧЕСКОЕ СОХРАНЕНИЕ В МАССИВЫ ДЛЯ АНАЛИЗА ---
     if (target_id === '#board') {
         if (!PokerEngine.gameState.board) { PokerEngine.gameState.board = []; }
+
+        // ХИТРАЯ ОЧИСТКА ДЛЯ БОРДА:
+        // Если это ФЛОП (пришло 3 карты), очищаем стол от старых раздач.
+        // Если это ТЁРН или РИВЕР (пришло меньше 3 карт, например, докидываем по одной), 
+        // то innerHTML НЕ очищаем, чтобы не стереть флоп!
+        if (cardsArray.length >= 3) {
+            container.innerHTML = '';
+        }
     } else {
         let targetPlayerId;
         if (target_id === '#cards-p') {
             targetPlayerId = 'player';
         } else {
-            // Теперь .replace() никогда не упадет, так как выше мы гарантировали, что target_id — это строка
             targetPlayerId = `bot-${target_id.replace('#cards-', '')}`;
         }
 
@@ -155,13 +162,13 @@ function renderCardsTo(cardsArray, target_id, isSecret = false) {
                 console.log(`[DATA ENGINE]: Карты для ${foundPlayer.name} сохранены в память:`, foundPlayer.cards);
             }
         }
+
+        // ДЛЯ ИГРОКОВ И БОТОВ: Очищаем контейнер всегда, у них всегда ровно 2 карты
+        container.innerHTML = '';
     }
     // -----------------------------------------------------
 
-    // Очищаем контейнер перед отрисовкой новых карт, чтобы они не дублировались
-    container.innerHTML = '';
-
-    // Отрисовка спанов карт
+    // Отрисовка спанов карт (добавление в container)
     cardsArray.forEach(char => {
         const span = document.createElement('span');
         span.textContent = char;
