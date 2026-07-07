@@ -65,7 +65,7 @@ let players = [
     { id: 'player', name: 'Вы', budget: 100, cards: [] },
     { id: 'bot-1', name: BOT_PROFILES['bot-1'].name, budget: 100, strategy: BOT_PROFILES['bot-1'].style, cards: [] },
     { id: 'bot-2', name: BOT_PROFILES['bot-2'].name, budget: 100, strategy: BOT_PROFILES['bot-2'].style, cards: [] },
-    { id: 'bot-3', name: BOT_PROFILES['bot-3'].name, budget: 10, strategy: BOT_PROFILES['bot-3'].style, cards: [] }
+    { id: 'bot-3', name: BOT_PROFILES['bot-3'].name, budget: 100, strategy: BOT_PROFILES['bot-3'].style, cards: [] }
 ];
 
 function startNextTournamentRound() {
