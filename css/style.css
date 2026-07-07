@@ -11,9 +11,6 @@ body {
 	-webkit-tap-highlight-color: transparent;
 	/* background: radial-gradient(circle, #226b4d 0%, #113824 100%); */
 	overflow: hidden;
-}
-
-button {
 	user-select: none;
 }
 
