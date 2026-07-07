@@ -1267,7 +1267,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Запуск новой раздачи
 function startNewHand() {
     // =============================================================================
-    //  STORY DLC: БЕЗУПРЕЧНЫЙ ПЕРЕХВАТ - ВЕТАЛ ❤️ 404 (С ВИЗУАЛЬНЫМ ОБНОВЛЕНИЕМ)
+    //  STORY DLC: БЕЗУПРЕЧНЫЙ ПЕРЕХВАТ - ВЕТАЛ ❤️ 404 (ВЫЧУЩЕННЫЙ И БЕЗОПАСНЫЙ)
     // =============================================================================
     const botVetal = players.find(p => p.id === 'bot-2');
     const bot404 = players.find(p => p.id === 'bot-3');
@@ -1276,11 +1276,33 @@ function startNewHand() {
         StoryState.vetalSaved404 = true;
         console.log("[STORY]: Ветал замечает банкротство 404 и запускает сцену помощи!");
 
-        // МГНОВЕННО выравниваем балансы в памяти
+        // 1. МГНОВЕННО выравниваем балансы в памяти
         botVetal.budget -= 5;
         bot404.budget = 5;
 
-        // Блокируем элементы управления (защита от лишних кликов)
+        // 2. ЖЕСТКАЯ КОРРЕКЦИЯ DOM ДЛЯ БОТА 404 (Убираем "ВЫБЫЛ" руками до рендера)
+        const el404 = document.querySelector('#bot-3');
+        if (el404) {
+            el404.classList.remove('eliminated'); // Удаляем штамп выбывшего
+            el404.style.opacity = '1';
+
+            // Находим спан с балансом внутри бокса бота 404 и обновляем цифру
+            const balanceSpan404 = el404.querySelector('#bot-balance-3') || el404.querySelector('[id*="balance"]');
+            if (balanceSpan404) {
+                balanceSpan404.textContent = '5$';
+            }
+        }
+
+        // Жесткая коррекция DOM для Ветала (минусуем 5$)
+        const elVetal = document.querySelector('#bot-2');
+        if (elVetal) {
+            const balanceSpanVetal = elVetal.querySelector('#bot-balance-2') || elVetal.querySelector('[id*="balance"]');
+            if (balanceSpanVetal) {
+                balanceSpanVetal.textContent = `${botVetal.budget}$`;
+            }
+        }
+
+        // Блокируем элементы управления
         const actionPanel = document.querySelector('.action-buttons, .controls');
         if (actionPanel) actionPanel.style.pointerEvents = 'none';
 
@@ -1291,11 +1313,15 @@ function startNewHand() {
         setTimeout(() => {
             botSay('#bot-2', "Держи, мне не сложно. Играй.", 3500);
 
-            // ТРИГГЕР ДЛЯ DOM: Обновляем балансы на плашках прямо во время полета сердечка
-            if (typeof PokerEngine !== 'undefined' && PokerEngine.render) {
-                PokerEngine.render();
-            } else if (typeof renderCardsTo === 'function') {
-                renderCardsTo();
+            // Обертываем рендер в try-catch, чтобы если он упадет, анимация и игра НЕ зависали!
+            try {
+                if (typeof PokerEngine !== 'undefined' && PokerEngine.render) {
+                    PokerEngine.render();
+                } else if (typeof renderCardsTo === 'function') {
+                    renderCardsTo();
+                }
+            } catch (renderError) {
+                console.warn("[STORY БАГ ПОДТВЕРЖДЕН]: Движок рендера споткнулся, но мы едем дальше:", renderError);
             }
 
             if (typeof spawnHeartBetween === 'function') {
@@ -1306,9 +1332,11 @@ function startNewHand() {
             setTimeout(() => {
                 if (actionPanel) actionPanel.style.pointerEvents = 'auto';
 
-                if (typeof PokerEngine !== 'undefined' && PokerEngine.render) {
-                    PokerEngine.render();
-                }
+                try {
+                    if (typeof PokerEngine !== 'undefined' && PokerEngine.render) {
+                        PokerEngine.render();
+                    }
+                } catch (e) { }
 
                 console.log("[STORY]: Сцена завершена. Принудительно пинаем движок префлопа.");
                 if (typeof PokerEngine !== 'undefined' && PokerEngine.initPreflop) {
@@ -1318,7 +1346,7 @@ function startNewHand() {
 
         }, 4000);
 
-        return; // Мгновенно выходим, ждем завершения таймеров кат-сцены
+        return; // Мгновенно выходим
     }
     // =============================================================================
 

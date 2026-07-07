@@ -124,38 +124,52 @@ document.body.appendChild(container);
 //_______________________________________________________________
 // - - - Р Е Н Д Е Р   К А Р Т  - - -
 function renderCardsTo(cardsArray, target_id, isSecret = false) {
+    // 1. ЖЕСТКАЯ ЗАЩИТА: Если селектор не передан, пустой или не является строкой
+    if (!target_id || typeof target_id !== 'string') {
+        console.warn(`[RENDER БЛОКЕР]: Функция renderCardsTo вызвана с некорректным target_id:`, target_id);
+        return;
+    }
+
     const container = document.querySelector(target_id);
-    if (!container) { console.error(`Элемент "${target_id}" не найден!`); return; }
+    if (!container) {
+        console.error(`[RENDER ERROR]: Элемент "${target_id}" не найден в DOM стола!`);
+        return;
+    }
 
     // --- АВТОМАТИЧЕСКОЕ СОХРАНЕНИЕ В МАССИВЫ ДЛЯ АНАЛИЗА ---
     if (target_id === '#board') {
-        // УДАЛЯЕМ ОТСЮДА .push()! 
-        // Логика игры в game-logic.js теперь сама управляет состоянием board.
         if (!PokerEngine.gameState.board) { PokerEngine.gameState.board = []; }
     } else {
-        // Для игроков и ботов оставляем, тут всё работает чётко
         let targetPlayerId;
         if (target_id === '#cards-p') {
             targetPlayerId = 'player';
         } else {
+            // Теперь .replace() никогда не упадет, так как выше мы гарантировали, что target_id — это строка
             targetPlayerId = `bot-${target_id.replace('#cards-', '')}`;
         }
 
-        const foundPlayer = players.find(p => p.id === targetPlayerId);
-        if (foundPlayer) {
-            foundPlayer.cards = [...cardsArray];
-            console.log(`[DATA ENGINE]: Карты для ${foundPlayer.name} сохранены в память:`, foundPlayer.cards);
+        if (typeof players !== 'undefined' && Array.isArray(players)) {
+            const foundPlayer = players.find(p => p.id === targetPlayerId);
+            if (foundPlayer) {
+                foundPlayer.cards = [...cardsArray];
+                console.log(`[DATA ENGINE]: Карты для ${foundPlayer.name} сохранены в память:`, foundPlayer.cards);
+            }
         }
     }
     // -----------------------------------------------------
 
-    // Дальше твой стандартный код отрисовки спанов...
+    // Очищаем контейнер перед отрисовкой новых карт, чтобы они не дублировались
+    container.innerHTML = '';
+
+    // Отрисовка спанов карт
     cardsArray.forEach(char => {
         const span = document.createElement('span');
         span.textContent = char;
         span.classList.add('card');
+
         const isRed = char === char.toUpperCase();
         span.dataset.color = isRed ? 'red' : 'black';
+
         if (isSecret) {
             span.classList.add('card-back');
         } else {
