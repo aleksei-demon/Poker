@@ -819,6 +819,123 @@ button {
 	transform: translateY(-2px);
 }
 
+/* =============================================================================
+   STORY DLC: АДАПТИВНЫЕ ОБЛАЧКА КОМИКСОВ
+   ============================================================================= */
+.speech-bubble {
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%) translateY(10px);
+	background: #ffffff;
+	color: #222222;
+	padding: 10px 14px;
+	border-radius: 12px;
+	box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 1.4;
+
+	/* Управляем размерами строго и адаптивно */
+	width: max-content;
+	max-width: 200px;
+	/* Ограничиваем ширину, чтобы текст шел вниз */
+	height: auto;
+	/* Плашка будет ровно по высоте текста! */
+
+	/* Принудительно заставляем текст переноситься */
+	white-space: normal;
+	/* Сбрасываем nowrap от родительских элементов */
+	overflow-wrap: break-word;
+	/* Безопасный перенос слов */
+	word-break: normal;
+
+	z-index: 100;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+/* ДЕФОЛТ: Растет ВВЕРХ (для нижних игроков) */
+.speech-bubble.direction-up {
+	bottom: 115%;
+}
+
+.speech-bubble.direction-up::after {
+	content: '';
+	position: absolute;
+	top: 100%;
+	left: 50%;
+	transform: translateX(-50%);
+	border-width: 8px;
+	border-style: solid;
+	border-color: #ffffff transparent transparent transparent;
+}
+
+/* МОДИФИКАТОР: Растет ВНИЗ (для верхних ботов) */
+.speech-bubble.direction-down {
+	top: 115%;
+	/* Появляется снизу под аватаркой */
+	transform: translateX(-50%) translateY(-10px);
+}
+
+.speech-bubble.direction-down.show {
+	transform: translateX(-50%) translateY(0);
+}
+
+.speech-bubble.direction-down::after {
+	content: '';
+	position: absolute;
+	bottom: 100%;
+	/* Стрелочка теперь указывает вверх */
+	left: 50%;
+	transform: translateX(-50%);
+	border-width: 8px;
+	border-style: solid;
+	border-color: transparent transparent #ffffff transparent;
+}
+
+/* Плавное проявление */
+.speech-bubble.show {
+	opacity: 1;
+	transform: translateX(-50%) translateY(0);
+}
+
+/* Эффект летающего сердечка */
+.story-heart {
+	position: absolute;
+	font-size: 30px;
+	color: #ff3366;
+	z-index: 101;
+	pointer-events: none;
+	opacity: 0;
+	transform: scale(0.5);
+	transition: all 1.5s ease-out;
+}
+
+/* CSS маркеры пола для плашек игроков */
+.gender-marker {
+	position: absolute;
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	min-width: 8px;
+	min-height: 8px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+
+.gender-male {
+	background-color: #266f9f;
+	box-shadow: 0 0 6px #266f9f;
+}
+
+.gender-female {
+	background-color: #a64059;
+	box-shadow: 0 0 6px #a64059;
+}
+
+
+/* ====== O R I E N T A T I O N   P O R T R A I T ============== O R I E N T A T I O N   P O R T R A I T ========================================== */
 @media screen and (orientation: portrait) {
 
 	.button-panel {

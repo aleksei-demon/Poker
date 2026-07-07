@@ -1,3 +1,4 @@
+'use strict';
 // =============================================================================
 //  GAME-FUNC.JS — готовые функции игры
 // =============================================================================
@@ -309,3 +310,148 @@ function showCustomConfirm(message) {
     });
 }
 
+// =============================================================================
+//  STORY DLC: VISUAL ENGINE (DIALOGUES & EFFECTS)
+// =============================================================================
+
+/**
+ * Заставляет бота или игрока сказать фразу в "пузыре" комикса
+ * @param {string} targetSelector - CSS селектор контейнера бокса бота (например '#bot-box-1')
+ * @param {string} text - Текст реплики
+ * @param {number} duration - Время отображения в мс
+ */
+function botSay(targetSelector, text, duration = 3500) {
+    const container = document.querySelector(targetSelector);
+    if (!container) { console.warn(`[STORY]: Контейнер ${targetSelector} не найден.`); return; }
+
+    // На всякий случай удаляем старый пузырь, если бот еще не договорил прошлую фразу
+    const oldBubble = container.querySelector('.speech-bubble');
+    if (oldBubble) oldBubble.remove();
+
+    const bubble = document.createElement('div');
+    bubble.classList.add('speech-bubble');
+    bubble.textContent = text;
+
+    // Специфика Vanilla JS: контейнер должен быть relative, чтобы absolute пузырь встал ровно над ним
+    if (window.getComputedStyle(container).position === 'static') {
+        container.style.position = 'relative';
+    }
+
+    container.appendChild(bubble);
+
+    // Плавное появление
+    requestAnimationFrame(() => {
+        bubble.classList.add('show');
+    });
+
+    // Плавное исчезновение и удаление
+    setTimeout(() => {
+        bubble.classList.remove('show');
+        bubble.addEventListener('transitionend', () => {
+            bubble.remove();
+        });
+    }, duration);
+}
+
+/**
+ * Создает красивый визуальный эффект пролетающего сердечка между двумя точками
+ */
+function spawnHeartBetween(fromSelector, toSelector) {
+    const fromEl = document.querySelector(fromSelector);
+    const toEl = document.querySelector(toSelector);
+    if (!fromEl || !toEl) return;
+
+    const fromRect = fromEl.getBoundingClientRect();
+    const toRect = toEl.getBoundingClientRect();
+
+    const heart = document.createElement('div');
+    heart.innerHTML = '❤️';
+    heart.classList.add('story-heart');
+
+    // Начальная позиция (центр первого элемента)
+    heart.style.left = `${fromRect.left + fromRect.width / 2}px`;
+    heart.style.top = `${fromRect.top + fromRect.height / 2}px`;
+    document.body.appendChild(heart);
+
+    requestAnimationFrame(() => {
+        heart.style.opacity = '1';
+        heart.style.transform = 'scale(1.3) translateY(-20px)';
+
+        // Перелет к центру второго элемента
+        setTimeout(() => {
+            heart.style.left = `${toRect.left + toRect.width / 2}px`;
+            heart.style.top = `${toRect.top + toRect.height / 2}px`;
+            heart.style.transform = 'scale(0.8)';
+            heart.style.opacity = '0.7';
+        }, 300);
+    });
+
+    // Чистка DOM
+    setTimeout(() => {
+        heart.style.opacity = '0';
+        setTimeout(() => heart.remove(), 500);
+    }, 2000);
+}
+
+// =============================================================================
+//  STORY DLC: ГИБКАЯ СИНОПТИКА (game-func.js)
+// =============================================================================
+/**
+ * Получает детальную погоду по конкретным координатам
+ * @param {number|string} lat - Широта (по умолчанию Харьков)
+ * @param {number|string} lon - Долгота (по умолчанию Харьков)
+ * @returns {Promise<Object>}
+ */
+function fetchDetailedWeather(lat = 50.00, lon = 36.23) {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m&wind_speed_unit=ms`;
+
+    return fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            const current = data.current;
+            return {
+                temp: Math.round(current.temperature_2m),
+                wind: Math.round(current.wind_speed_10m),
+                code: current.weather_code
+            };
+        })
+        .catch(err => {
+            console.warn("[STORY API]: Не удалось получить погоду, включаем харьковский дефолт.");
+            return { temp: 12, wind: 4, code: 3 };
+        });
+}
+
+function loadSeptemberWeather() {
+    if (StoryState.weatherLoaded) return;
+
+    // Сначала определяем координаты по IP-адресу игрока
+    fetch('http://ip-api.com/json/?fields=status,lat,lon')
+        .then(res => res.json())
+        .then(geo => {
+            if (geo && geo.status === 'success') {
+                console.log(`[STORY IP]: Координаты определены (${geo.lat}, ${geo.lon}). Запрашиваем погоду...`);
+                return fetchDetailedWeather(geo.lat, geo.lon);
+            } else {
+                throw new Error('ip-api returned failed status');
+            }
+        })
+        .catch(err => {
+            console.warn("[STORY IP]: Не определили IP, переключаемся на Харьков по умолчанию.");
+            // 50.00, 36.23 — координаты Харькова
+            return fetchDetailedWeather(50.00, 36.23);
+        })
+        .then(weather => {
+            // Когда погода (неважно, по IP или Харькову) пришла, сохраняем её вместе с датой
+            const now = new Date();
+            StoryState.weatherData = {
+                temp: weather.temp,
+                wind: weather.wind,
+                code: weather.code,
+                dayOfWeek: now.toLocaleDateString('ru-RU', { weekday: 'long' }),
+                month: now.getMonth() + 1,
+                dayOfMonth: now.getDate()
+            };
+            StoryState.weatherLoaded = true;
+            console.log("[STORY]: Данные синоптика успешно зашиты в стейт:", StoryState.weatherData);
+        });
+}

@@ -1,3 +1,4 @@
+'use strict';
 // =============================================================================
 //  GAME-LOGIC.JS — логика приложения и стейт-машина
 // =============================================================================
@@ -122,6 +123,20 @@ function startNextTournamentRound() {
     // 6. Запускаем новую раздачу через твой стандартный метод!
     startNewHand();
 }
+
+// =============================================================================
+//  STORY DLC: STATE ENGINE
+// =============================================================================
+const StoryState = {
+    mihalichSavedPlayer: false,
+    vetalSaved404: false,
+    weatherLoaded: false,
+    weatherData: null,
+    septemberCommentedWeather: false // Флаг, чтобы Сентябрь ворчал один раз
+};
+
+
+
 
 // 2.==== Д В И Ж О К   И Г Р Ы ===============================
 const PokerEngine = {
@@ -645,12 +660,86 @@ const PokerEngine = {
         // Если сам игрок проиграл все фишки
         const playerObj = players.find(p => p.id === 'player');
         if (playerObj && playerObj.budget <= 0) {
+
+            // =============================================================================
+            //  STORY DLC: УНИВЕРСАЛЬНЫЙ ДУШЕВНЫЙ ПЕРЕХВАТ (С МГНОВЕННЫМ ОБНОВЛЕНИЕМ DOM)
+            // =============================================================================
+            if (!StoryState.mihalichSavedPlayer && Math.random() < 0.5) {
+                StoryState.mihalichSavedPlayer = true;
+
+                // Ищем всех живых ботов с бюджетом >= 5, исключая "404"
+                const kindBots = players.filter(p => p.id !== 'player' && p.name !== '404' && p.budget >= 5);
+
+                if (kindBots.length > 0) {
+                    const saviorBot = kindBots[Math.floor(Math.random() * kindBots.length)];
+
+                    console.log(`[STORY]: Бот ${saviorBot.name} решает спасти игрока!`);
+
+                    // МГНОВЕННО пересчитываем балансы в памяти
+                    saviorBot.budget -= 5;
+                    playerObj.budget = 5;
+
+                    // Приглушаем кнопки управления
+                    const actionPanel = document.querySelector('.action-buttons, .controls');
+                    if (actionPanel) {
+                        actionPanel.style.opacity = '0.1';
+                        actionPanel.style.pointerEvents = 'none';
+                    }
+
+                    const phrases = {
+                        'Михалыч': "Держи 5$. Посиди ещё немного с нами. Весело с тобой...",
+                        'Ветал': "Да ладно тебе, не уходи. Возьми пятерку, бро.",
+                        'Андрей': "Куда собрался? На вот пять баксов, погнали дальше. "
+                    };
+
+                    const botPhrase = phrases[saviorBot.name] || `Держи 5$, земляк. Рано тебе еще вылетать, посиди с нами.`;
+
+                    // Шаг 1: Показываем реплику и ОДНОВРЕМЕННО обновляем цифры на экране
+                    setTimeout(() => {
+                        botSay(`#${saviorBot.id}`, botPhrase, 7500);
+
+                        // ТРИГГЕР ДЛЯ DOM: Фишки визуально перетекают к игроку прямо в момент начала фразы!
+                        if (typeof PokerEngine !== 'undefined' && PokerEngine.render) {
+                            PokerEngine.render();
+                        } else if (typeof renderCardsTo === 'function') {
+                            renderCardsTo();
+                        }
+
+                        // Шаг 2: Ждем, пока игрок прочитает текст, возвращаем управление и запускаем новую раздачу
+                        setTimeout(() => {
+                            if (actionPanel) {
+                                actionPanel.style.opacity = '1';
+                                actionPanel.style.pointerEvents = 'auto';
+                            }
+
+                            // Закрепляющий рендер стола
+                            if (typeof PokerEngine !== 'undefined' && PokerEngine.render) {
+                                PokerEngine.render();
+                            }
+
+                            // Запускаем чистую раздачу с новыми бюджетами
+                            if (typeof startNewHand === 'function') {
+                                startNewHand();
+                            } else if (typeof PokerEngine !== 'undefined' && PokerEngine.startHand) {
+                                PokerEngine.startHand();
+                            }
+
+                            console.log(`[STORY]: Игрок спасен ботом ${saviorBot.name}. Раздача запущена.`);
+                        }, 3500);
+
+                    }, 1500);
+
+                    return false; // Защита от стандартного вылета
+                }
+            }
+
+            // СТАНДАРТНЫЙ ВЫЛЕТ
             const actionPanel = document.querySelector('.action-buttons, .controls');
             if (actionPanel) {
                 actionPanel.style.opacity = '0.1';
                 actionPanel.style.pointerEvents = 'none';
             }
-            showMessage_("💸 Вы вылетели из турнира! Игра окончена.", 7000);
+            showMessage_("💸 Вы вылетели из турнира! Игра окончена.", 7000); //
             return true;
         }
 
@@ -1149,10 +1238,121 @@ document.addEventListener('DOMContentLoaded', () => {
     players.forEach(p => PokerEngine.syncBalancesUI(p));
     // 2. И только потом запускаем первую раздачу
     startNewHand();
+    loadSeptemberWeather();
 });
 
 // Запуск новой раздачи
 function startNewHand() {
+    // =============================================================================
+    //  STORY DLC: БЕЗУПРЕЧНЫЙ ПЕРЕХВАТ - ВЕТАЛ ❤️ 404 (С ВИЗУАЛЬНЫМ ОБНОВЛЕНИЕМ)
+    // =============================================================================
+    const botVetal = players.find(p => p.id === 'bot-2');
+    const bot404 = players.find(p => p.id === 'bot-3');
+
+    if (botVetal && bot404 && bot404.budget <= 0 && !StoryState.vetalSaved404 && botVetal.budget >= 10) {
+        StoryState.vetalSaved404 = true;
+
+        console.log("[STORY]: Ветал замечает банкротство 404 и запускает сцену помощи!");
+
+        // МГНОВЕННО выравниваем балансы в памяти
+        botVetal.budget -= 5;
+        bot404.budget = 5;
+
+        // Блокируем кнопки
+        const actionPanel = document.querySelector('.action-buttons, .controls');
+        if (actionPanel) actionPanel.style.pointerEvents = 'none';
+
+        // Шаг 1: Просьба 404
+        botSay('#bot-3', "Ветал, подкинешь пятёрочку, а то вылечу?", 3500);
+
+        // Шаг 2: Ответ и сердечко
+        setTimeout(() => {
+            botSay('#bot-2', "Держи, мне не сложно. Играй.", 3500);
+
+            // ТРИГГЕР ДЛЯ DOM: Обновляем интерфейс прямо СЕЙЧАС, 
+            // чтобы балансы изменились на плашках прямо во время полета сердечка!
+            if (typeof PokerEngine !== 'undefined' && PokerEngine.render) {
+                PokerEngine.render();
+            } else if (typeof renderCardsTo === 'function') {
+                renderCardsTo(); // На случай, если рендер вызывается отдельно
+            }
+
+            if (typeof spawnHeartBetween === 'function') {
+                spawnHeartBetween('#bot-2', '#bot-3');
+            }
+
+            // Шаг 3: Синхронизация и запуск торгов
+            setTimeout(() => {
+                if (actionPanel) actionPanel.style.pointerEvents = 'auto';
+
+                // Финальный закрепляющий рендер перед раздачей карт
+                if (typeof PokerEngine !== 'undefined' && PokerEngine.render) {
+                    PokerEngine.render();
+                }
+
+                console.log("[STORY]: Сцена завершена. Принудительно пинаем движок префлопа.");
+
+                if (typeof PokerEngine !== 'undefined' && PokerEngine.initPreflop) {
+                    PokerEngine.initPreflop();
+                }
+            }, 3000);
+
+        }, 4000);
+
+        return; // Мгновенно выходим, ждем завершения таймеров кат-сцены
+    }
+    // ========================================================================
+
+    // =============================================================================
+    //  STORY DLC: СЕНТЯБРЬ — МЕСТНЫЙ СИНОПТИК И КАЛЕНДАРЬ
+    // =============================================================================
+    const septemberBot = players.find(p => p.name.trim() === 'Сентябрь');
+    if (septemberBot && StoryState.weatherLoaded && !StoryState.septemberCommentedWeather) {
+        StoryState.septemberCommentedWeather = true;
+
+        const w = StoryState.weatherData;
+        let phrase = "";
+
+        // ИГРАЕМ В НОВЫЙ ГОД? (31 декабря, 1 или 2 января)
+        if ((w.month === 12 && w.dayOfMonth === 31) || (w.month === 1 && (w.dayOfMonth === 1 || w.dayOfMonth === 2))) {
+            phrase = `С Новым годом, мужики!  Насыпайте фишки, под ёлочку пойдёт...`;
+        }
+        // ЕСЛИ НЕ НОВЫЙ ГОД — РАБОТАЕМ ПО ПОГОДЕ И КАЛЕНДАРЮ
+        else {
+            // Начало реплики: привязка ко дню недели
+            phrase = `Вот уже ${w.dayOfWeek}, время летит... `;
+
+            // Оцениваем температуру
+            if (w.temp < 0) phrase += `А на улице дубак конкретный, ${w.temp}°C. `;
+            else if (w.temp > 25) phrase += `А за окном пекло, ${w.temp}°C, дышать нечем. `;
+            else phrase += `Погода шепчет, ${w.temp}°C как-никак.`;
+
+            // Оцениваем облачность и дождь по кодам WMO
+            // 0 - ясно, 1-3 - переменная облачность, >50 - осадки (дождь/снег)
+            if (w.code >= 61 && w.code <= 67) {
+                phrase += `Ещё и дождь этот зарядил, мерзость. `;
+            } else if (w.code >= 1 && w.code <= 3) {
+                phrase += `Хоть тучи немного разогнало. `;
+            } else if (w.code === 0) {
+                phrase += `Солнце лупит прямо в монитор. `;
+            }
+
+            // Оцениваем силу ветра
+            if (w.wind > 10) {
+                phrase += `И ветрище ${w.wind} м/с, аж рамы трещат. `;
+            }
+
+            // Финал реплики в его стиле
+            phrase += ` Идеальный момент, чтобы катать покер.`;
+        }
+
+        // Выводим облачко через 2.5 секунды после раздачи карт
+        setTimeout(() => {
+            botSay(`#${septemberBot.id}`, phrase, 9000); // Даем 9 секунд, так как текст сочный и длинный
+        }, 2500);
+    }
+    // =============================================================================
+
     // ПЕРВЫМ ДЕЛОМ проверяем, а не закончился ли турнир в прошлой раздаче?
     if (typeof PokerEngine !== 'undefined' && PokerEngine.checkTableBankruptcy) {
         const isGameOver = PokerEngine.checkTableBankruptcy();
@@ -1265,5 +1465,7 @@ function updateTournamentLevel() {
 
 
 //___________ад и израиль ______________________________________________
+
+
 
 

@@ -3,11 +3,11 @@
  RENDER.JS - отрисовка экранов
 =====================================================================================
 Порядок подключения: 
-1. aprender.js (библиотека: h, factory, clear)
-2. utils.js    (форматирование, работа со строками)
-3. api.js      (async/fetch — связь с сервером)
-4. logic.js    (массивы данных и математические формулы)
-5. render.js   (чертежи компонентов и отрисовка экранов)
+1. aprender.js      (библиотека: h, factory, clear)
+2. utils.js         (форматирование, работа со строками)
+3. game-func.js     (функции игры)
+4. game-logic.js    (машина, логика работы)
+5. render.js        (чертежи компонентов и отрисовка экранов)
 
 */
 // _____________________________________________________________________________________
@@ -29,32 +29,35 @@ const myFields = [
     {
         tag: 'section', class: 'bots-section',
         children: [
-            // БОТ 1
+            // БОТ 1 (Андрей / Михалыч)
             {
                 id: 'bot-1',
                 class: 'bot-place',
                 children: [
                     { tag: 'div.dealer-chip', innerText: 'D' },
+                    { tag: 'span.gender-marker.gender-male' }, // <-- Голубой кружок
                     { tag: 'span.white', innerText: 'Андрей ' },
                     { tag: 'span#bot-balance-1', innerText: '100$' },
                     { tag: 'div#cards-1.bot', children: [{ tag: 'span' }] },
                 ]
             },
-            // БОТ 2
+            // БОТ 2 (Ветал)
             {
                 id: 'bot-2', class: 'bot-place',
                 children: [
                     { tag: 'div.dealer-chip', innerText: 'D' },
+                    { tag: 'span.gender-marker.gender-male' }, // <-- Голубой кружок
                     { tag: 'span.white', innerText: 'Ветал ' },
                     { tag: 'span#bot-balance-2', innerText: '100$' },
                     { tag: 'div#cards-2.bot', children: [{ tag: 'span' }] },
                 ]
             },
-            // БОТ 3
+            // БОТ 3 (404)
             {
                 id: 'bot-3', class: 'bot-place',
                 children: [
                     { tag: 'div.dealer-chip', innerText: 'D' },
+                    { tag: 'span.gender-marker.gender-female' }, // <-- Розовый кружок!
                     { tag: 'span.white', innerText: '404 ' },
                     { tag: 'span#bot-balance-3', innerText: '100$' },
                     { tag: 'div#cards-3.bot', children: [{ tag: 'span' }] },
