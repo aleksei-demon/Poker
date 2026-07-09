@@ -1,716 +1,444 @@
-# AI_CONTEXT.md
+DOCUMENT TYPE
 
-# Poker Project
+Machine-readable static documentation.
 
-## Overview
+Audience:
+Large Language Models (LLM)
 
-Texas Hold'em No Limit poker game.
+Generation rules:
 
-Language:
-JavaScript (Vanilla)
+- Facts only.
+- No inferred behavior.
+- No renamed identifiers.
+- No merged entities.
+- No normalized API.
+- Exact spelling preserved.
+- Exact casing preserved.
+- Unknown is preferred over assumption.
 
-Architecture:
-Engine + Mechanics + Rendering
+# Poker_AI_Knowledge_Base
+## Part 01
 
-Rendering:
-Custom DOM builder
+DOCUMENT TYPE
 
-Project Status:
-Playable prototype
+Machine-readable static documentation.
 
----
+Audience:
+Large Language Models (LLM)
 
-# File Structure
+Generation rules:
 
-index.html
-│
-├── appender.js
-├── utils.js
-├── game-func.js
-├── game-logic.js
-└── render.js
+- Facts only.
+- No inferred behavior.
+- No renamed identifiers.
+- No merged entities.
+- No normalized API.
+- Preserve exact identifier spelling.
+- Preserve exact identifier casing.
+- Unknown is preferred over assumption.
 
----
+================================================================================
+PROJECT
+================================================================================
 
-# Load Order
-
-index.html
-
-↓
-
-appender.js
-
-↓
-
-utils.js
-
-↓
-
-game-func.js
-
-↓
-
-game-logic.js
-
-↓
-
-render.js
-
----
-
-# Architecture
-
-                User
-                  │
-                  ▼
-           Action Buttons
-                  │
-                  ▼
-            makeAction()
-                  │
-                  ▼
-     PokerEngine.executeAction()
-                  │
-     ┌────────────┴─────────────┐
-     ▼                          ▼
-Game Mechanics             Rendering
-(game-func.js)             (render.js)
-     │                          │
-     └────────────┬─────────────┘
-                  ▼
-                 DOM
-
----
-
-# File Responsibilities
-
-## index.html
-
-Entry point.
-
-Loads every project module in dependency order.
-
-Contains only root HTML.
-
----
-
-## appender.js
-
-Purpose
-
-Declarative DOM construction library.
-
-Main API
-
-h()
-
-factory()
-
-nestedBlueprint()
-
-clear()
-
-Responsibilities
-
-- Create DOM nodes
-- Parse blueprint objects
-- Apply styles
-- Apply attributes
-- Attach event listeners
-- Recursive rendering
-
----
-
-## utils.js
-
-Purpose
-
-General UI utilities.
-
-Main API
-
-showMessage_()
-
-Responsibilities
-
-- Temporary messages
-- Error messages
-- Animation cleanup
-
----
-
-## game-func.js
-
-Purpose
-
-Poker mechanics library.
-
-Contains reusable game algorithms.
-
-Main API
-
-tasov()
-
-parseCard()
-
-evaluateFiveCards()
-
-getBestCombination()
-
-dealCards()
-
-calculatePots()
-
-makeAutomaticBet()
-
-updateDealerChipsUI()
-
-makeAction()
-
-showCustomConfirm()
-
-Responsibilities
-
-Deck generation
-
-Deck shuffle
-
-Card parsing
-
-Hand evaluation
-
-Best combination search
-
-Automatic blinds
-
-Side pot calculation
-
-Dealer chip
-
-Modal dialogs
-
----
-
-## game-logic.js
-
-Purpose
-
-Main game engine.
-
-Owns complete game state.
-
-Main Object
-
-PokerEngine
-
-Responsibilities
-
-Game initialization
-
-Round lifecycle
-
-Player turns
-
-Betting
-
-Street progression
-
-Showdown
-
-Winner calculation
-
-Pot distribution
-
-Restart logic
-
----
-
-## render.js
-
-Purpose
-
-Rendering layer.
-
-Contains every visual component.
-
-Main API
-
-renderCardsTo()
-
-Favicon()
-
-Responsibilities
-
-Application layout
-
-Player rendering
-
-Bot rendering
-
-Board rendering
-
-Card rendering
-
-Action buttons
-
-Slider
-
-Money panel
-
----
-
-# Global Objects
-
-PokerEngine
-
-players
-
-KOLODA
-
-CURRENT_DEALER
-
-masti
-
----
-
-# PokerEngine
-
-Owns
-
-gameState
-
-board
-
-pot
-
-players
-
-dealer
-
-currentStreet
-
-currentPlayer
-
-currentBet
-
-lastRaise
-
-Controls
-
-New game
-
-New hand
-
-Betting
-
-Action order
-
-Winner
-
-Showdown
-
----
-
-# Deck Pipeline
-
-tasov()
-
-↓
-
-KOLODA
-
-↓
-
-dealCards()
-
-↓
-
-renderCardsTo()
-
----
-
-# Hand Evaluation Pipeline
-
-parseCard()
-
-↓
-
-evaluateFiveCards()
-
-↓
-
-getBestCombination()
-
-↓
-
-Winner
-
----
-
-# Action Pipeline
-
-Player Click
-
-↓
-
-makeAction()
-
-↓
-
-PokerEngine.executeAction()
-
-↓
-
-Update Game State
-
-↓
-
-Render
-
----
-
-# Round Pipeline
-
-New Hand
-
-↓
-
-Shuffle
-
-↓
-
-Blinds
-
-↓
-
-Deal
-
-↓
-
-Pre-Flop
-
-↓
-
-Flop
-
-↓
-
-Betting
-
-↓
-
-Turn
-
-↓
-
-Betting
-
-↓
-
-River
-
-↓
-
-Betting
-
-↓
-
-Showdown
-
-↓
-
-Award Pot
-
-↓
-
-Next Hand
-
----
-
-# Rendering Pipeline
-
-Game State
-
-↓
-
-renderCardsTo()
-
-↓
-
-DOM
-
-↓
-
-Visible UI
-
----
-
-# Entity Map
-
-PokerEngine
-
-Owns
-
-- gameState
-- board
-- betting
-- turns
-- showdown
-
-Depends on
-
-- game-func.js
-- render.js
-
----
-
-players[]
-
-Contains
-
-- cards
-- bankroll
-- currentBet
-- folded
-- allIn
-- seat
-- name
-
-Modified by
-
-PokerEngine
-
-Rendered by
-
-renderCardsTo()
-
----
-
-KOLODA
-
-Current deck.
-
-Created by
-
-tasov()
-
-Consumed by
-
-dealCards()
-
----
-
-Board
-
-Community cards.
-
-Owned by
-
-PokerEngine.gameState
-
-Rendered by
-
-renderCardsTo()
-
----
-
-Pot
-
-Owned by
-
-PokerEngine
-
-Updated by
-
-makeAutomaticBet()
-
-executeAction()
-
-awardPot()
-
----
-
-Dealer
-
-Current dealer position.
-
-Updated after every hand.
-
-Rendered by
-
-updateDealerChipsUI()
-
----
-
-# Function Index
-
-## appender.js
-
-h()
-
-factory()
-
-nestedBlueprint()
-
-clear()
-
----
-
-## utils.js
-
-showMessage_()
-
----
-
-## game-func.js
-
-tasov()
-
-parseCard()
-
-evaluateFiveCards()
-
-getBestCombination()
-
-dealCards()
-
-makeAutomaticBet()
-
-updateDealerChipsUI()
-
-makeAction()
-
-calculatePots()
-
-showCustomConfirm()
-
----
-
-## game-logic.js
-
-PokerEngine
-
-startNewGame()
-
-startHand()
-
-executeAction()
-
-nextPlayer()
-
-nextStreet()
-
-showdown()
-
-awardPot()
-
-resetRound()
-
----
-
-## render.js
-
-renderCardsTo()
-
-Favicon()
-
----
-
-# Keywords
+Project Name
 
 Poker
 
-Texas Holdem
+Language
 
-Deck
+JavaScript
 
-Shuffle
+Architecture
 
-Deal
+Unknown
 
-Player
+================================================================================
+SOURCE FILES
+================================================================================
 
-Bot
+1.
+index.html
 
-Dealer
+2.
+appender.js
 
-Blind
+3.
+utils.js
 
-Small Blind
+4.
+game-func.js
 
-Big Blind
+5.
+game-logic.js
 
-Pot
+6.
+render.js
 
-Side Pot
+================================================================================
+DOCUMENTED LOAD ORDER
+================================================================================
 
-Board
+1.
+appender.js
 
-Community Cards
+2.
+utils.js
 
-Flop
+3.
+game-func.js
 
-Turn
+4.
+game-logic.js
 
-River
+5.
+render.js
 
-Showdown
+================================================================================
+GLOBAL SYMBOL INDEX
+================================================================================
 
-Winner
+Functions
 
-Pair
+clear
 
-Two Pair
+factory
 
-Three of a Kind
+Favicon
 
-Straight
+h
 
-Flush
+nestedBlueprint
 
-Full House
+renderCardsTo
 
-Four of a Kind
+showMessage_
 
-Straight Flush
+Objects
 
-Royal Flush
+PokerEngine
 
-Call
+Variables
 
-Check
+CURRENT_DEALER
 
-Raise
+KOLODA
 
-Fold
+masti
 
-All-in
+messageTimeout
 
-Engine
+myFields
 
-Render
+players
 
-DOM
+Constants
 
-Blueprint
+Unknown
 
-State Machine
+================================================================================
+GLOBAL OBJECT INDEX
+================================================================================
 
-Game State
+PokerEngine
 
----
+Referenced from
 
-# Module Dependencies
+game-logic.js
+
+render.js
+
+Known Members
+
+PokerEngine.gameState
+
+Unknown members are intentionally omitted.
+
+-------------------------------------------------------------------------------
+
+PokerEngine.gameState
+
+Referenced Members
+
+activePlayerIndex
+
+actedPlayers
+
+board
+
+botTimer
+
+currentBet
+
+foldedPlayers
+
+lastRaise
+
+pot
+
+roundBets
+
+totalBets
+
+================================================================================
+GLOBAL VARIABLE INDEX
+================================================================================
+
+CURRENT_DEALER
+
+Referenced
+
+game-func.js
+
+-------------------------------------------------------------------------------
+
+KOLODA
+
+Referenced
+
+game-func.js
+
+-------------------------------------------------------------------------------
+
+players
+
+Referenced
+
+game-func.js
+
+game-logic.js
+
+render.js
+
+-------------------------------------------------------------------------------
+
+masti
+
+Referenced
+
+game-func.js
+
+-------------------------------------------------------------------------------
+
+messageTimeout
+
+Declared
+
+utils.js
+
+-------------------------------------------------------------------------------
+
+myFields
+
+Declared
+
+render.js
+
+================================================================================
+FILE INDEX
+================================================================================
+
+appender.js
+
+Exports
+
+None detected
+
+Declares
+
+h
+
+nestedBlueprint
+
+factory
+
+clear
+
+-------------------------------------------------------------------------------
+
+utils.js
+
+Declares
+
+messageTimeout
+
+showMessage_
+
+-------------------------------------------------------------------------------
+
+game-func.js
+
+Contains
+
+Functions
+
+Global variables
+
+Poker utility logic
+
+Exact function list:
+See Part 03.
+
+-------------------------------------------------------------------------------
+
+game-logic.js
+
+Contains
+
+PokerEngine
+
+Methods
+
+State manipulation
+
+Exact method list:
+See Part 04.
+
+-------------------------------------------------------------------------------
+
+render.js
+
+Declares
+
+myFields
+
+renderCardsTo
+
+Favicon
+
+================================================================================
+DOM IDENTIFIER INDEX
+================================================================================
+
+IDs
+
+app
+
+bank
+
+bot-1
+
+bot-2
+
+bot-3
+
+bot-balance-1
+
+bot-balance-2
+
+bot-balance-3
+
+btn-allin
+
+btn-call
+
+btn-check
+
+btn-fold
+
+btn-raise
+
+cards-1
+
+cards-2
+
+cards-3
+
+cards-p
+
+p-balance
+
+raise-range-slider
+
+raise-slider-container
+
+slider-max-label
+
+slider-min-label
+
+slider-value
+
+-------------------------------------------------------------------------------
+
+Classes
+
+bot
+
+bot-place
+
+bots-section
+
+button-panel
+
+btn-all-in
+
+btn-call
+
+btn-check
+
+btn-fold
+
+btn-raise
+
+card
+
+card-back
+
+card-front
+
+cards-table
+
+dealer-chip
+
+gender-marker
+
+gender-female
+
+gender-male
+
+money
+
+player
+
+slider-labels-block
+
+slider-title-block
+
+white
+
+================================================================================
+KNOWN EVENTS
+================================================================================
+
+animationend
+
+DOMContentLoaded
+
+click
+
+================================================================================
+ACTION IDENTIFIERS
+================================================================================
+
+fold
+
+check
+
+call
+
+raise
+
+all-in
+
+================================================================================
+DEPENDENCY ORDER
+================================================================================
 
 appender.js
 
 ↓
 
-render.js
-
-↓
-
-game-logic.js
+utils.js
 
 ↓
 
@@ -718,55 +446,2985 @@ game-func.js
 
 ↓
 
+game-logic.js
+
+↓
+
+render.js
+
+================================================================================
+NEXT DOCUMENT
+================================================================================
+
+Poker_AI_Knowledge_Base
+Part 02
+
+Contents
+
+appender.js
+
 utils.js
 
-(index.html loads all modules)
+Complete function index.
+
+End of Part 01.
+
+
+# Poker_AI_Knowledge_Base
+## Part 02
+
+DOCUMENT TYPE
+
+Machine-readable static documentation.
+
+Audience:
+Large Language Models (LLM)
+
+Generation rules:
+
+- Facts only.
+- No inferred behavior.
+- No renamed identifiers.
+- No merged entities.
+- No normalized API.
+- Preserve exact identifier spelling.
+- Preserve exact identifier casing.
+- Unknown is preferred over assumption.
+
+================================================================================
+FILE
+================================================================================
+
+appender.js
+
+================================================================================
+GLOBAL SYMBOLS
+================================================================================
+
+Functions
+
+h
+
+nestedBlueprint
+
+factory
+
+clear
+
+================================================================================
+FUNCTION
+================================================================================
+
+Identifier
+
+h
+
+Type
+
+Function Declaration
+
+Signature
+
+h(sel, obj = {}, children = [])
+
+Parameters
+
+sel
+
+obj
+
+children
+
+Returns
+
+HTMLElement
+
+Calls
+
+document.createElement
+
+sel.split
+
+sel.match
+
+el.addEventListener
+
+Object.assign
+
+el.setAttribute
+
+children.forEach
+
+el.append
+
+Reads
+
+sel
+
+obj
+
+children
+
+Writes
+
+el.id
+
+el.className
+
+el.style
+
+el.innerHTML
+
+HTMLElement properties
+
+DOM attributes
+
+Called by (inside current project)
+
+nestedBlueprint
+
+================================================================================
+FUNCTION
+================================================================================
+
+Identifier
+
+nestedBlueprint
+
+Type
+
+Arrow Function
+
+Signature
+
+nestedBlueprint(item)
+
+Parameters
+
+item
+
+Returns
+
+Return value of
+
+h(tag, props, domChildren)
+
+Calls
+
+Array.isArray
+
+factory
+
+domChildren.push
+
+h
+
+Reads
+
+item
+
+nodeData
+
+childrenData
+
+Writes
+
+props
+
+domChildren
+
+Called by
+
+factory
+
+================================================================================
+FUNCTION
+================================================================================
+
+Identifier
+
+factory
+
+Type
+
+Function Declaration
+
+Signature
+
+factory(data, blueprint)
+
+Parameters
+
+data
+
+blueprint
+
+Returns
+
+Result of
+
+data.filter(Boolean).map(...)
+
+Calls
+
+data.filter
+
+Array.map
+
+blueprint
+
+Reads
+
+data
+
+blueprint
+
+Writes
+
+None detected
+
+Called by
+
+nestedBlueprint
+
+================================================================================
+FUNCTION
+================================================================================
+
+Identifier
+
+clear
+
+Type
+
+Function Declaration
+
+Signature
+
+clear(node = '')
+
+Parameters
+
+node
+
+Returns
+
+undefined
+
+Calls
+
+document.querySelector
+
+console.warn
+
+Reads
+
+node
+
+document.body
+
+Writes
+
+document.body.innerHTML
+
+target.innerHTML
+
+Called by
+
+Unknown
+
+================================================================================
+DOM API USAGE
+================================================================================
+
+document.createElement
+
+Used by
+
+h
+
+-------------------------------------------------------------------------------
+
+document.querySelector
+
+Used by
+
+clear
+
+-------------------------------------------------------------------------------
+
+HTMLElement.append
+
+Used by
+
+h
+
+-------------------------------------------------------------------------------
+
+HTMLElement.setAttribute
+
+Used by
+
+h
+
+-------------------------------------------------------------------------------
+
+HTMLElement.addEventListener
+
+Used by
+
+h
+
+================================================================================
+DEPENDENCIES
+================================================================================
+
+No ES module import detected.
+
+No ES module export detected.
+
+================================================================================
+FILE
+================================================================================
+
+utils.js
+
+================================================================================
+GLOBAL SYMBOLS
+================================================================================
+
+Variables
+
+messageTimeout
+
+Functions
+
+showMessage_
+
+================================================================================
+VARIABLE
+================================================================================
+
+Identifier
+
+messageTimeout
+
+Type
+
+let
+
+Assignments
+
+Declaration detected.
+
+Further assignments
+
+Unknown
+
+================================================================================
+FUNCTION
+================================================================================
+
+Identifier
+
+showMessage_
+
+Type
+
+Function Declaration
+
+Signature
+
+showMessage_(message = '', timeShow = 900, red = false)
+
+Parameters
+
+message
+
+timeShow
+
+red
+
+Returns
+
+return
+
+(no value)
+
+Otherwise
+
+No explicit return.
+
+Calls
+
+document.querySelector
+
+document.getElementById
+
+oldMessage.remove
+
+document.createElement
+
+p.classList.add
+
+p.setAttribute
+
+p.style.setProperty
+
+table.appendChild
+
+p.addEventListener
+
+p.remove
+
+Reads
+
+message
+
+timeShow
+
+red
+
+table
+
+oldMessage
+
+p.parentNode
+
+Writes
+
+p.innerText
+
+DOM tree
+
+CSS custom property
+
+DOM attributes
+
+Event listeners
+
+================================================================================
+EVENT LISTENERS
+================================================================================
+
+Registered
+
+animationend
+
+Callback
+
+p.remove()
+
+================================================================================
+DOM DEPENDENCIES
+================================================================================
+
+Selectors
+
+.cards-table
+
+#p_message
+
+================================================================================
+DOM ELEMENTS CREATED
+================================================================================
+
+p
+
+================================================================================
+CSS CLASSES USED
+================================================================================
+
+message
+
+error
+
+================================================================================
+CSS CUSTOM PROPERTIES
+================================================================================
+
+--show-time
+
+================================================================================
+DEPENDENCIES
+================================================================================
+
+No ES module import detected.
+
+No ES module export detected.
+
+No async function detected.
+
+No Promise detected.
+
+No fetch detected.
+
+No XMLHttpRequest detected.
+
+No WebSocket detected.
+
+================================================================================
+CALL GRAPH
+================================================================================
+
+showMessage_
+
+↓
+
+document.querySelector
+
+↓
+
+document.getElementById
+
+↓
+
+document.createElement
+
+↓
+
+table.appendChild
+
+↓
+
+animationend
+
+↓
+
+p.remove
+
+================================================================================
+NEXT DOCUMENT
+================================================================================
+
+Poker_AI_Knowledge_Base
+
+Part 03
+
+Contents
+
+game-func.js
+
+Complete function index.
+
+End of Part 02.
+
+# Poker_AI_Knowledge_Base
+## Part 03A
+
+DOCUMENT TYPE
+
+Machine-readable static documentation.
+
+Audience
+
+Large Language Models (LLM)
+
+Rules
+
+Facts only.
+No inferred behavior.
+No renamed identifiers.
+Preserve exact spelling.
+Preserve exact casing.
+
+================================================================================
+FILE
+================================================================================
+
+game-func.js
+
+================================================================================
+GLOBAL VARIABLES
+================================================================================
+
+Identifier
+
+masti
+
+Type
+
+const
+
+Initializer
+
+Array
+
+Dimensions
+
+4 × 13
+
+Purpose
+
+Stores card symbols grouped by suit.
+
+-------------------------------------------------------------------------------
+
+Identifier
+
+KOLODA
+
+Type
+
+let
+
+Initializer
+
+[]
+
+Purpose
+
+Deck storage.
+
+-------------------------------------------------------------------------------
+
+Top-level execution
+
+tasov()
+
+Executed immediately after declaration.
+
+================================================================================
+FUNCTION
+================================================================================
+
+Identifier
+
+tasov
+
+Type
+
+Function Declaration
+
+Signature
+
+tasov()
+
+Parameters
+
+None
+
+Returns
+
+No explicit return.
+
+Calls
+
+masti.flat
+
+Math.floor
+
+Math.random
+
+Set
+
+console.log
+
+console.error
+
+Reads
+
+masti
+
+Writes
+
+KOLODA
+
+Local variables
+
+temp_masti
+
+uniqueCards
+
+Side effects
+
+Shuffles deck.
+
+Assigns shuffled deck to KOLODA.
+
+Logs deck status.
+
+Checks duplicate cards.
+
+Called by
+
+Top-level execution
+
+dealCards
+
+================================================================================
+FUNCTION
+================================================================================
+
+Identifier
+
+parseCard
+
+Type
+
+Function Declaration
+
+Signature
+
+parseCard(cardSymbol)
+
+Parameters
+
+cardSymbol
+
+Returns
+
+Object
+
+or
+
+null
+
+Return object fields
+
+value
+
+suit
+
+Calls
+
+typeof
+
+masti.length
+
+Array.indexOf
+
+Reads
+
+cardSymbol
+
+masti
+
+Writes
+
+None detected
+
+Called by
+
+evaluateFiveCards
+
+================================================================================
+FUNCTION
+================================================================================
+
+Identifier
+
+evaluateFiveCards
+
+Type
+
+Function Declaration
+
+Signature
+
+evaluateFiveCards(fiveChars)
+
+Parameters
+
+fiveChars
+
+Returns
+
+Object
+
+Fields
+
+score
+
+name
+
+Calls
+
+parseCard
+
+Array.map
+
+Array.filter
+
+Array.sort
+
+cards.forEach
+
+Object.values
+
+Math.pow
+
+Reads
+
+fiveChars
+
+masti (indirectly through parseCard)
+
+Writes
+
+Local variables only
+
+Detected combination names
+
+Стрит-Флеш
+
+Каре
+
+Фулл-Хаус
+
+Флеш
+
+Стрит
+
+Сет
+
+Две Пары
+
+Пара
+
+Старшая карта
+
+Called by
+
+getBestCombination
+
+================================================================================
+FUNCTION
+================================================================================
+
+Identifier
+
+getBestCombination
+
+Type
+
+Function Declaration
+
+Signature
+
+getBestCombination(sevenChars)
+
+Parameters
+
+sevenChars
+
+Returns
+
+Object
+
+Fields
+
+score
+
+name
+
+Calls
+
+console.error
+
+evaluateFiveCards
+
+Reads
+
+sevenChars
+
+Writes
+
+bestHand
+
+currentFive
+
+currentResult
+
+Loop structure
+
+Nested loops
+
+i
+
+j
+
+k
+
+l
+
+m
+
+Evaluated hand size
+
+5 cards
+
+Called by
+
+Unknown
+
+================================================================================
+FUNCTION
+================================================================================
+
+Identifier
+
+dealCards
+
+Type
+
+Function Declaration
+
+Signature
+
+dealCards(deck, count, targetId, isSecret = false)
+
+Parameters
+
+deck
+
+count
+
+targetId
+
+isSecret
+
+Returns
+
+cardsToGive
+
+Calls
+
+console.warn
+
+tasov
+
+deck.pop
+
+cardsToGive.push
+
+renderCardsTo
+
+Reads
+
+deck
+
+count
+
+targetId
+
+isSecret
+
+KOLODA
+
+Writes
+
+cardsToGive
+
+deck
+
+Side effects
+
+May replace local deck reference with KOLODA.
+
+Called by
+
+Unknown
+
+================================================================================
+FUNCTION
+================================================================================
+
+Identifier
+
+makeAutomaticBet
+
+Type
+
+Function Declaration
+
+Signature
+
+makeAutomaticBet(playerObj, amount)
+
+Parameters
+
+playerObj
+
+amount
+
+Returns
+
+No explicit return.
+
+Calls
+
+Math.min
+
+document.querySelector
+
+console.log
+
+Reads
+
+playerObj
+
+playerObj.id
+
+playerObj.budget
+
+playerObj.name
+
+PokerEngine.gameState
+
+Writes
+
+playerObj.budget
+
+PokerEngine.gameState.pot
+
+PokerEngine.gameState.roundBets
+
+balanceEl.textContent
+
+DOM selectors
+
+#p-balance
+
+#bot-balance-1
+
+#bot-balance-2
+
+#bot-balance-3
+
+Called by
+
+Unknown
+
+================================================================================
+FUNCTION
+================================================================================
+
+Identifier
+
+updateDealerChipsUI
+
+Type
+
+Function Declaration
+
+Signature
+
+updateDealerChipsUI()
+
+Parameters
+
+None
+
+Returns
+
+No explicit return.
+
+Calls
+
+players.forEach
+
+document.querySelector
+
+Reads
+
+players
+
+CURRENT_DEALER
+
+Writes
+
+chip.style.display
+
+activeChip.style.display
+
+DOM selector patterns
+
+.player .dealer-chip
+
+#${p.id} .dealer-chip
+
+Called by
+
+Unknown
+
+================================================================================
+FUNCTION
+================================================================================
+
+Identifier
+
+makeAction
+
+Type
+
+Function Declaration
+
+Signature
+
+makeAction(type)
+
+Parameters
+
+type
+
+Returns
+
+No explicit return.
+
+Calls
+
+type.toUpperCase
+
+PokerEngine.executeAction
+
+Reads
+
+type
+
+Writes
+
+actionType
+
+Called by
+
+Unknown
+
+================================================================================
+FUNCTION
+================================================================================
+
+Identifier
+
+calculatePots
+
+Type
+
+Function Declaration
+
+Signature
+
+calculatePots(activePlayers)
+
+Parameters
+
+activePlayers
+
+Returns
+
+pots
+
+Calls
+
+activePlayers.map
+
+Array.filter
+
+Array.some
+
+Math.min
+
+Array.forEach
+
+Array.push
+
+Reads
+
+activePlayers
+
+PokerEngine.gameState.totalBets
+
+Writes
+
+playerBets
+
+pots
+
+eligiblePlayerIds
+
+potAmount
+
+Called by
+
+Unknown
+
+================================================================================
+GLOBAL DEPENDENCIES
+================================================================================
+
+PokerEngine
+
+PokerEngine.gameState
+
+players
+
+CURRENT_DEALER
+
+renderCardsTo
+
+================================================================================
+DOM DEPENDENCIES
+================================================================================
+
+document.querySelector
+
+#p-balance
+
+#bot-balance-1
+
+#bot-balance-2
+
+#bot-balance-3
+
+.player .dealer-chip
+
+#${p.id} .dealer-chip
+
+================================================================================
+TOP-LEVEL EXECUTION
+================================================================================
+
+tasov()
+
+================================================================================
+CALL GRAPH (EXACT)
+================================================================================
+
+Top Level
+└── tasov
+
+parseCard
+└── Array.indexOf
+
+evaluateFiveCards
+├── parseCard
+├── Array.map
+├── Array.filter
+├── Array.sort
+├── cards.forEach
+└── Math.pow
+
+getBestCombination
+├── evaluateFiveCards
+└── console.error
+
+dealCards
+├── tasov
+├── deck.pop
+├── cardsToGive.push
+└── renderCardsTo
+
+makeAutomaticBet
+├── Math.min
+├── document.querySelector
+└── console.log
+
+updateDealerChipsUI
+├── players.forEach
+└── document.querySelector
+
+makeAction
+├── String.toUpperCase
+└── PokerEngine.executeAction
+
+calculatePots
+├── Array.map
+├── Array.some
+├── Array.filter
+├── Array.forEach
+├── Math.min
+└── Array.push
+
+================================================================================
+NEXT DOCUMENT
+================================================================================
+
+Poker_AI_Knowledge_Base
+
+Part 03B
+
+Contents
+
+showCustomConfirm
+
+botSay
+
+spawnHeartBetween
+
+fetchDetailedWeather
+
+loadSeptemberWeather
+
+Async dependencies
+
+Network dependencies
+
+Story DLC symbols
+
+End of Part 03A.
+
+# Poker_AI_Knowledge_Base
+## Part 03B
+
+DOCUMENT TYPE
+
+Machine-readable static documentation.
+
+Audience
+
+Large Language Models (LLM)
+
+Rules
+
+Facts only.
+No inferred behavior.
+No renamed identifiers.
+Preserve exact spelling.
+Preserve exact casing.
+
+================================================================================
+FILE
+================================================================================
+
+game-func.js
+
+================================================================================
+FUNCTION
+================================================================================
+
+Identifier
+
+showCustomConfirm
+
+Type
+
+Function Declaration
+
+Signature
+
+showCustomConfirm(message)
+
+Parameters
+
+message
+
+Returns
+
+Promise
+
+Resolved values
+
+true
+
+false
+
+Calls
+
+Promise
+
+document.createElement
+
+appendChild
+
+document.body.appendChild
+
+overlay.classList.add
+
+overlay.classList.remove
+
+overlay.remove
+
+setTimeout
+
+resolve
+
+Reads
+
+message
+
+Writes
+
+overlay.className
+
+modal.className
+
+textEl.className
+
+textEl.innerText
+
+btnContainer.className
+
+confirmBtn.className
+
+confirmBtn.innerText
+
+cancelBtn.className
+
+cancelBtn.innerText
+
+confirmBtn.onclick
+
+cancelBtn.onclick
+
+DOM Elements Created
+
+div
+
+div
+
+div
+
+div
+
+button
+
+button
+
+CSS Classes
+
+custom-modal-overlay
+
+custom-modal-window
+
+custom-modal-text
+
+custom-modal-buttons
+
+custom-modal-btn
+
+btn-confirm
+
+btn-cancel
+
+Timers
+
+setTimeout(..., 10)
+
+setTimeout(..., 400)
+
+Event Handlers
+
+confirmBtn.onclick
+
+cancelBtn.onclick
+
+================================================================================
+FUNCTION
+================================================================================
+
+Identifier
+
+botSay
+
+Type
+
+Function Declaration
+
+Signature
+
+botSay(targetSelector, text, duration = 3500)
+
+Parameters
+
+targetSelector
+
+text
+
+duration
+
+Returns
+
+No explicit return.
+
+Calls
+
+document.querySelector
+
+console.warn
+
+container.querySelector
+
+oldBubble.remove
+
+document.createElement
+
+bubble.classList.add
+
+window.getComputedStyle
+
+container.appendChild
+
+requestAnimationFrame
+
+setTimeout
+
+bubble.addEventListener
+
+bubble.remove
+
+Reads
+
+targetSelector
+
+text
+
+duration
+
+container
+
+oldBubble
+
+Writes
+
+bubble.textContent
+
+container.style.position
+
+CSS class list
+
+DOM tree
+
+DOM Elements Created
+
+div
+
+CSS Classes
+
+speech-bubble
+
+show
+
+Events Registered
+
+transitionend
+
+Timers
+
+setTimeout(duration)
+
+================================================================================
+FUNCTION
+================================================================================
+
+Identifier
+
+spawnHeartBetween
+
+Type
+
+Function Declaration
+
+Signature
+
+spawnHeartBetween(fromSelector, toSelector)
+
+Parameters
+
+fromSelector
+
+toSelector
+
+Returns
+
+No explicit return.
+
+Calls
+
+document.querySelector
+
+getBoundingClientRect
+
+document.createElement
+
+document.body.appendChild
+
+requestAnimationFrame
+
+setTimeout
+
+heart.remove
+
+Reads
+
+fromSelector
+
+toSelector
+
+fromRect
+
+toRect
+
+Writes
+
+heart.innerHTML
+
+heart.style.left
+
+heart.style.top
+
+heart.style.opacity
+
+heart.style.transform
+
+DOM Elements Created
+
+div
+
+CSS Classes
+
+story-heart
+
+Timers
+
+setTimeout(..., 300)
+
+setTimeout(..., 2000)
+
+setTimeout(..., 500)
+
+================================================================================
+FUNCTION
+================================================================================
+
+Identifier
+
+fetchDetailedWeather
+
+Type
+
+Function Declaration
+
+Signature
+
+fetchDetailedWeather(lat = 50.00, lon = 36.23)
+
+Parameters
+
+lat
+
+lon
+
+Returns
+
+Promise
+
+Resolved Object Fields
+
+temp
+
+wind
+
+code
+
+Calls
+
+fetch
+
+response.json
+
+Math.round
+
+console.warn
+
+Reads
+
+lat
+
+lon
+
+Writes
+
+None detected
+
+Network
+
+GET
+
+https://api.open-meteo.com/v1/forecast
+
+Promise Chain
+
+fetch
+
+↓
+
+response.json
+
+↓
+
+then
+
+↓
+
+catch
+
+================================================================================
+FUNCTION
+================================================================================
+
+Identifier
+
+loadSeptemberWeather
+
+Type
+
+Function Declaration
+
+Signature
+
+loadSeptemberWeather()
+
+Parameters
+
+None
+
+Returns
+
+No explicit return.
+
+Calls
+
+fetch
+
+res.json
+
+fetchDetailedWeather
+
+console.log
+
+console.warn
+
+Date
+
+now.toLocaleDateString
+
+now.getMonth
+
+now.getDate
+
+Reads
+
+StoryState.weatherLoaded
+
+geo.status
+
+geo.lat
+
+geo.lon
+
+weather.temp
+
+weather.wind
+
+weather.code
+
+Writes
+
+StoryState.weatherData
+
+StoryState.weatherLoaded
+
+Promise Chain
+
+fetch
+
+↓
+
+res.json
+
+↓
+
+fetchDetailedWeather
+
+↓
+
+catch
+
+↓
+
+then
+
+================================================================================
+GLOBAL DEPENDENCIES
+================================================================================
+
+StoryState
+
+StoryState.weatherLoaded
+
+StoryState.weatherData
+
+document.body
+
+window
+
+Promise
+
+Date
+
+================================================================================
+NETWORK DEPENDENCIES
+================================================================================
+
+fetch
+
+-------------------------------------------------------------------------------
+
+URL
+
+https://api.open-meteo.com/v1/forecast
+
+-------------------------------------------------------------------------------
+
+URL
+
+http://ip-api.com/json/?fields=status,lat,lon
+
+================================================================================
+DOM DEPENDENCIES
+================================================================================
+
+document.createElement
+
+document.body
+
+document.querySelector
+
+container.querySelector
+
+window.getComputedStyle
+
+================================================================================
+DOM ELEMENTS CREATED
+================================================================================
+
+div
+
+button
+
+================================================================================
+CSS CLASSES
+================================================================================
+
+custom-modal-overlay
+
+custom-modal-window
+
+custom-modal-text
+
+custom-modal-buttons
+
+custom-modal-btn
+
+btn-confirm
+
+btn-cancel
+
+speech-bubble
+
+show
+
+story-heart
+
+================================================================================
+EVENTS
+================================================================================
+
+onclick
+
+transitionend
+
+================================================================================
+TIMERS
+================================================================================
+
+setTimeout
+
+requestAnimationFrame
+
+================================================================================
+CALL GRAPH (EXACT)
+================================================================================
+
+showCustomConfirm
+├── Promise
+├── document.createElement
+├── appendChild
+├── document.body.appendChild
+├── setTimeout
+└── resolve
+
+botSay
+├── document.querySelector
+├── container.querySelector
+├── document.createElement
+├── window.getComputedStyle
+├── requestAnimationFrame
+├── setTimeout
+├── bubble.addEventListener
+└── bubble.remove
+
+spawnHeartBetween
+├── document.querySelector
+├── getBoundingClientRect
+├── document.createElement
+├── document.body.appendChild
+├── requestAnimationFrame
+├── setTimeout
+└── heart.remove
+
+fetchDetailedWeather
+├── fetch
+├── response.json
+├── Math.round
+└── console.warn
+
+loadSeptemberWeather
+├── fetch
+├── res.json
+├── fetchDetailedWeather
+├── Date
+├── console.log
+└── console.warn
+
+================================================================================
+NEXT DOCUMENT
+================================================================================
+
+Poker_AI_Knowledge_Base
+
+Part 04
+
+Contents
+
+game-logic.js
+
+Complete method index.
+
+End of Part 03B.
+
+# Poker_AI_Knowledge_Base
+
+## File
+
+`game-func.js`
 
 ---
 
-# Design Principles
+# Purpose
 
-- Game rules belong to **game-func.js**.
-- Game flow belongs to **PokerEngine**.
-- UI rendering belongs to **render.js**.
-- DOM creation belongs to **appender.js**.
-- UI notifications belong to **utils.js**.
-- `PokerEngine.gameState` is the primary game state container.
-- `renderCardsTo()` is the canonical card rendering function.
-- `getBestCombination()` is the canonical 7-card hand evaluator.
-- `evaluateFiveCards()` is the canonical 5-card evaluator.
-- `dealCards()` is the canonical dealing function.
-- `tasov()` is responsible for deck creation and shuffle.
+Controls poker hand flow.
+
+Contains the `PokerEngine` object.
+
+Contains player action handling.
+
+Contains bot decision execution.
+
+Contains tournament progression logic.
+
+Contains showdown processing.
+
+Contains bankruptcy handling.
+
+Contains story event handling.
+
+Contains new hand initialization.
 
 ---
 
-# Project Goal
+# Global Object
 
-Develop a modular Texas Hold'em engine that cleanly separates:
+## PokerEngine
 
-- game state
-- poker mechanics
-- rendering
-- UI
-- utility functions
+### Property
 
-to allow future expansion with new gameplay modes, AI improvements, and DLC features without major architectural changes.
+`gameState`
 
-//----------------------------
-//каждый раз, когда в проекте появляется новая крупная механика (например, твое DLC), мы не переписываем его, а добавляем в конец отдельный раздел:
+Contains:
 
-# Changelog
+- `pot`
+- `currentBet`
+- `activePlayerIndex`
+- `lastRaiseIndex`
+- `roundBets`
+- `foldedPlayers`
+- `street`
+- `actedPlayers`
+- `totalBets`
+- `board`
+- `botTimer`
 
-## v0.6
-- Added side pots
-- Added all-in support
+---
 
-## v0.7
-- Added dealer rotation
-- Added betting engine
+### Getter
 
-## DLC: Story Mode
-- New NPC system
-- Dialogue manager
-- Story triggers
-- Quest flags
+`activePlayers`
+
+Returns:
+
+```javascript
+players.filter(p =>
+    p.budget > 0 &&
+    !this.gameState.foldedPlayers.includes(p.id)
+)
+```
+
+---
+
+# PokerEngine Methods
+
+## initPreflop()
+
+Calls:
+
+- `updateTournamentLevel()`
+- `getNextActivePlayerIndex()`
+- `makeAutomaticBet()`
+- `startWaitingForAction()`
+
+Updates:
+
+- `gameState.currentBet`
+- `gameState.foldedPlayers`
+- `gameState.roundBets`
+- `gameState.totalBets`
+- `gameState.street`
+- `gameState.actedPlayers`
+- `gameState.board`
+- `gameState.activePlayerIndex`
+
+Reads:
+
+- `CURRENT_DEALER`
+- `SMALL_BLIND`
+- `BIG_BLIND`
+
+---
+
+## startWaitingForAction()
+
+Reads:
+
+- `gameState.activePlayerIndex`
+
+Calls:
+
+- `highlightActivePlayerUI()`
+- `toggleControlsUI()`
+- `runBotLogic()`
+
+Uses:
+
+- `gameState.botTimer`
+
+---
+
+## handleFold(playerId)
+
+Updates:
+
+- `gameState.foldedPlayers`
+
+Calls:
+
+- `syncFoldUI()`
+- `handleLoneSurvivorWin()`
+
+Returns:
+
+- `true`
+- `false`
+
+---
+
+## handleLoneSurvivorWin()
+
+Updates:
+
+- winner budget
+
+Calls:
+
+- `syncBalancesUI()`
+- `checkTableBankruptcy()`
+- `startNewHand()`
+
+---
+
+## handleCall(playerId)
+
+Updates:
+
+- player budget
+- `gameState.pot`
+- `gameState.roundBets`
+- `gameState.totalBets`
+
+Calls:
+
+- `syncBalancesUI()`
+
+---
+
+## handleRaise(playerId, raiseAmount)
+
+Updates:
+
+- player budget
+- `gameState.pot`
+- `gameState.roundBets`
+- `gameState.currentBet`
+- `gameState.totalBets`
+- `gameState.actedPlayers`
+
+Calls:
+
+- `syncBalancesUI()`
+
+---
+
+## handleAllIn(playerId)
+
+Updates:
+
+- player budget
+- `gameState.pot`
+- `gameState.roundBets`
+- `gameState.totalBets`
+- `gameState.currentBet`
+- `gameState.actedPlayers`
+
+Calls:
+
+- `syncBalancesUI()`
+
+---
+
+## checkRoundCompletion()
+
+Calls:
+
+- `advanceStreet()`
+- `nextTurn()`
+
+Reads:
+
+- `gameState.currentBet`
+- `gameState.roundBets`
+- `gameState.foldedPlayers`
+- `gameState.actedPlayers`
+
+---
+
+## advanceStreet()
+
+Updates:
+
+- `gameState.street`
+- `gameState.actedPlayers`
+- `gameState.currentBet`
+- `gameState.roundBets`
+- `gameState.board`
+
+Calls:
+
+- `dealCards()`
+- `showMessage_()`
+- `resetTurnForNewStreet()`
+- `handleShowdown()`
+
+---
+
+## resetTurnForNewStreet()
+
+Updates:
+
+- `gameState.activePlayerIndex`
+
+Calls:
+
+- `startWaitingForAction()`
+
+Reads:
+
+- `CURRENT_DEALER`
+
+---
+
+## handleShowdown()
+
+Calls:
+
+- `toggleControlsUI()`
+- `getBestCombination()`
+- `showMessage_()`
+- `calculatePots()`
+- `syncBalancesUI()`
+- `checkTableBankruptcy()`
+- `startNewHand()`
+
+Reads:
+
+- `gameState.board`
+
+---
+
+## checkTableBankruptcy()
+
+Reads:
+
+- `gameState.street`
+
+Updates:
+
+- player budgets
+- `gameState.pot`
+- `gameState.currentBet`
+- `gameState.roundBets`
+- `gameState.totalBets`
+- `gameState.foldedPlayers`
+- `gameState.actedPlayers`
+- `gameState.street`
+
+Calls:
+
+- `showMessage_()`
+- `showCustomConfirm()`
+- `botSay()`
+- `spawnHeartBetween()`
+- `startNewHand()`
+
+Returns:
+
+- `true`
+- `false`
+
+---
+
+## executeAction(playerId, actionType, amount)
+
+Calls:
+
+- `handleCall()`
+- `handleRaise()`
+- `handleFold()`
+- `handleAllIn()`
+- `checkRoundCompletion()`
+
+Updates:
+
+- `gameState.actedPlayers`
+
+---
+
+## nextTurn()
+
+Updates:
+
+- `gameState.activePlayerIndex`
+
+Calls:
+
+- `startWaitingForAction()`
+
+---
+
+## getCurrentPlayerId()
+
+Returns:
+
+`players[this.gameState.activePlayerIndex].id`
+
+---
+
+## highlightActivePlayerUI(activeId)
+
+Updates:
+
+DOM classes.
+
+---
+
+## syncFoldUI(playerId)
+
+Updates:
+
+DOM opacity.
+
+---
+
+## syncBalancesUI(playerObj)
+
+Updates:
+
+DOM balance values.
+
+Updates:
+
+DOM bank value.
+
+Updates:
+
+DOM player name.
+
+---
+
+## toggleControlsUI(isEnabled)
+
+Updates:
+
+Button state.
+
+Updates:
+
+Button labels.
+
+Reads:
+
+- `gameState.currentBet`
+- `gameState.roundBets`
+
+---
+
+# Global Variables
+
+## isSliderOpen
+
+Type:
+
+Boolean.
+
+---
+
+# Global Functions
+
+## makeAction(type, amount, e)
+
+Calls:
+
+- `PokerEngine.executeAction()`
+
+Reads:
+
+- `PokerEngine.gameState.currentBet`
+- `PokerEngine.gameState.roundBets`
+
+Updates:
+
+- raise slider DOM
+
+Updates:
+
+- `isSliderOpen`
+
+---
+
+## runBotLogic(botId)
+
+Reads:
+
+- `BOT_PROFILES`
+- `PokerEngine.gameState.board`
+- `PokerEngine.gameState.street`
+- `PokerEngine.gameState.roundBets`
+- `PokerEngine.gameState.currentBet`
+- `PokerEngine.gameState.pot`
+
+Calls:
+
+- `evaluatePreflopHand()`
+- `evaluateFiveCards()`
+- `getBestCombination()`
+- `PokerEngine.executeAction()`
+
+---
+
+## evaluatePreflopHand(cards)
+
+Returns:
+
+Number.
+
+Reads:
+
+Input card strings.
+
+---
+
+## startNewHand()
+
+Calls:
+
+- `PokerEngine.render()`
+- `PokerEngine.initPreflop()`
+- `showMessage_()`
+- `tasov()`
+- `dealCards()`
+- `updateDealerChipsUI()`
+- `botSay()`
+- `spawnHeartBetween()`
+- `loadSeptemberWeather()`
+
+Updates:
+
+- player cards
+- `PokerEngine.gameState`
+
+Reads:
+
+- `StoryState`
+
+Updates:
+
+DOM card containers.
+
+---
+
+## updateTournamentLevel()
+
+Updates:
+
+- `PokerEngine.gameState.handsPlayed`
+- `PokerEngine.gameState.currentLevelIdx`
+- `SMALL_BLIND`
+- `BIG_BLIND`
+
+Reads:
+
+- `TOURNAMENT_STRUCTURE`
+
+Calls:
+
+- `showMessage_()`
+
+---
+
+# External Identifiers Used
+
+## Variables
+
+- players
+- CURRENT_DEALER
+- SMALL_BLIND
+- BIG_BLIND
+- KOLODA
+- BOT_PROFILES
+- StoryState
+- TOURNAMENT_STRUCTURE
+
+---
+
+## Functions
+
+- updateTournamentLevel
+- getNextActivePlayerIndex
+- makeAutomaticBet
+- runBotLogic
+- showMessage_
+- dealCards
+- calculatePots
+- getBestCombination
+- evaluateFiveCards
+- evaluatePreflopHand
+- startNewHand
+- showCustomConfirm
+- botSay
+- spawnHeartBetween
+- tasov
+- updateDealerChipsUI
+- loadSeptemberWeather
+
+---
+
+# DOM Selectors Used
+
+- `#bank`
+- `#board`
+- `#cards-p`
+- `#cards-1`
+- `#cards-2`
+- `#cards-3`
+- `.player`
+- `.bot-place`
+- `#player`
+- `#bot-1`
+- `#bot-2`
+- `#bot-3`
+- `#p-balance`
+- `#bot-balance-1`
+- `#bot-balance-2`
+- `#bot-balance-3`
+- `#btn-fold`
+- `#btn-check`
+- `#btn-call`
+- `#btn-raise`
+- `#btn-allin`
+- `#raise-slider-container`
+- `#raise-range-slider`
+- `#slider-value`
+- `#slider-min-label`
+- `#slider-max-label`
+
+---
+
+# Events
+
+- `DOMContentLoaded`
+
+---
+
+# Entry Points
+
+- `DOMContentLoaded`
+- `makeAction()`
+- `runBotLogic()`
+- `startNewHand()`
+- `PokerEngine.executeAction()`
+```
+# Poker_AI_Knowledge_Base
+
+## FILE
+
+render.js
+
+---
+
+## PURPOSE
+
+UI rendering.
+
+Creates interface layout.
+
+Renders cards.
+
+Creates favicon.
+
+---
+
+## DEPENDENCIES
+
+Load order:
+
+1. aprender.js
+2. utils.js
+3. game-func.js
+4. game-logic.js
+5. render.js
+
+Referenced identifiers:
+
+- h
+- factory
+- nestedBlueprint
+- makeAction
+- PokerEngine
+- players
+
+DOM API:
+
+- document
+- document.body
+- document.head
+
+---
+
+# GLOBAL CONSTANT
+
+## myFields
+
+Type:
+
+Array
+
+Purpose:
+
+Blueprint used by factory().
+
+Contains UI description.
+
+---
+
+### money block
+
+Contains:
+
+- #bank
+- #p-balance
+
+---
+
+### bots-section
+
+Contains three bot containers.
+
+Bot ids:
+
+- bot-1
+- bot-2
+- bot-3
+
+Each bot contains:
+
+Dealer chip.
+
+Gender marker.
+
+Displayed name.
+
+Balance span.
+
+Cards container.
+
+Balance ids:
+
+- bot-balance-1
+- bot-balance-2
+- bot-balance-3
+
+Card container ids:
+
+- cards-1
+- cards-2
+- cards-3
+
+---
+
+### board section
+
+Contains:
+
+#board
+
+---
+
+### player section
+
+Contains:
+
+#cards-p
+
+Dealer chip.
+
+---
+
+### raise-slider-container
+
+Contains:
+
+- #slider-value
+- #raise-range-slider
+- #slider-min-label
+- #slider-max-label
+
+---
+
+### button-panel
+
+Buttons:
+
+- #btn-fold
+- #btn-check
+- #btn-call
+- #btn-raise
+- #btn-allin
+
+Button handlers:
+
+- makeAction('fold')
+- makeAction('check')
+- makeAction('call')
+- makeAction('raise')
+- makeAction('all-in')
+
+---
+
+# UI INITIALIZATION
+
+Executed immediately.
+
+const container = h(...)
+document.body.appendChild(container)
+
+Creates application root.
+
+Appends UI to document body.
+
+---
+
+# FUNCTION
+
+## renderCardsTo
+
+Signature
+
+renderCardsTo(cardsArray, target_id, isSecret = false)
+
+Parameters
+
+### cardsArray
+
+Type
+
+Array
+
+Purpose
+
+Cards to render.
+
+---
+
+### target_id
+
+Type
+
+String
+
+Purpose
+
+Target DOM selector.
+
+---
+
+### isSecret
+
+Type
+
+Boolean
+
+Default
+
+false
+
+Purpose
+
+Controls hidden card rendering.
+
+---
+
+## Validation
+
+Returns if target_id is missing.
+
+Returns if target_id is not a string.
+
+Returns if target DOM element is not found.
+
+---
+
+## Board rendering
+
+Condition
+
+target_id === '#board'
+
+Behavior
+
+Uses:
+
+PokerEngine.gameState.board
+
+Initializes board array if missing.
+
+If:
+
+cardsArray.length >= 3
+
+clears container.
+
+---
+
+## Player rendering
+
+Condition
+
+target_id !== '#board'
+
+Maps selector to player id.
+
+Mappings:
+
+#cards-p -> player
+
+#cards-1 -> bot-1
+
+#cards-2 -> bot-2
+
+#cards-3 -> bot-3
+
+Finds player in:
+
+players
+
+Copies:
+
+cardsArray
+
+into:
+
+player.cards
+
+Clears card container.
+
+---
+
+## Card rendering
+
+For every entry in cardsArray:
+
+Creates:
+
+<span>
+
+Adds class:
+
+card
+
+Sets:
+
+textContent
+
+Determines color using:
+
+char === char.toUpperCase()
+
+Stores result in:
+
+dataset.color
+
+Possible values:
+
+- red
+- black
+
+Adds class:
+
+card-back
+
+when:
+
+isSecret === true
+
+Adds class:
+
+card-front
+
+otherwise.
+
+Appends span to container.
+
+---
+
+# FUNCTION
+
+## Favicon
+
+Signature
+
+Favicon()
+
+Purpose
+
+Creates SVG favicon.
+
+---
+
+## SVG
+
+Contains:
+
+<svg>
+
+Contains:
+
+<path>
+
+Uses:
+
+currentColor
+
+---
+
+## DOM behavior
+
+Searches:
+
+link[rel~='icon']
+
+Creates link if missing.
+
+Sets:
+
+rel='icon'
+
+Sets:
+
+type='image/svg+xml'
+
+Assigns:
+
+href
+
+to encoded SVG.
+
+---
+
+# DOMContentLoaded
+
+Registers listener.
+
+Calls:
+
+Favicon()
+
+after DOM content loaded.
+
+---
+
+# DOM IDS
+
+- #app
+- #bank
+- #p-balance
+- #bot-1
+- #bot-2
+- #bot-3
+- #bot-balance-1
+- #bot-balance-2
+- #bot-balance-3
+- #cards-1
+- #cards-2
+- #cards-3
+- #cards-p
+- #board
+- #raise-slider-container
+- #raise-range-slider
+- #slider-value
+- #slider-min-label
+- #slider-max-label
+- #btn-fold
+- #btn-check
+- #btn-call
+- #btn-raise
+- #btn-allin
+
+---
+
+# EXPORTED IDENTIFIERS
+
+- myFields
+- renderCardsTo
+- Favicon
+
+---
+
+# REFERENCED EXTERNAL IDENTIFIERS
+
+- h
+- factory
+- nestedBlueprint
+- makeAction
+- PokerEngine
+- players
+- document
+
