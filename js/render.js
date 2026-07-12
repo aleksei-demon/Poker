@@ -35,8 +35,8 @@ const myFields = [
                 class: 'bot-place',
                 children: [
                     { tag: 'div.dealer-chip', innerText: 'D' },
-                    { tag: 'span.gender-marker.gender-male' }, // <-- Голубой кружок
-                    { tag: 'span.white', innerText: 'Андрей ' },
+                    { tag: 'span.gender-marker' }, // <-- Голубой кружок ИЗ ПРОГРАММЫ
+                    { tag: 'span.white', innerText: 'загрузка... ' },
                     { tag: 'span#bot-balance-1', innerText: '100$' },
                     { tag: 'div#cards-1.bot', children: [{ tag: 'span' }] },
                 ]
@@ -46,8 +46,8 @@ const myFields = [
                 id: 'bot-2', class: 'bot-place',
                 children: [
                     { tag: 'div.dealer-chip', innerText: 'D' },
-                    { tag: 'span.gender-marker.gender-male' }, // <-- Голубой кружок
-                    { tag: 'span.white', innerText: 'Ветал ' },
+                    { tag: 'span.gender-marker' }, // <-- Голубой кружок БЕЗ ХАРДКОДА
+                    { tag: 'span.white', innerText: 'загрузка... ' },
                     { tag: 'span#bot-balance-2', innerText: '100$' },
                     { tag: 'div#cards-2.bot', children: [{ tag: 'span' }] },
                 ]
@@ -57,8 +57,8 @@ const myFields = [
                 id: 'bot-3', class: 'bot-place',
                 children: [
                     { tag: 'div.dealer-chip', innerText: 'D' },
-                    { tag: 'span.gender-marker.gender-female' }, // <-- Розовый кружок!
-                    { tag: 'span.white', innerText: '404 ' },
+                    { tag: 'span.gender-marker' }, // <-- Розовый кружок ДА ДА))
+                    { tag: 'span.white', innerText: 'загрузка... ' },
                     { tag: 'span#bot-balance-3', innerText: '100$' },
                     { tag: 'div#cards-3.bot', children: [{ tag: 'span' }] },
                 ]
@@ -123,6 +123,8 @@ document.body.appendChild(container);
 
 //_______________________________________________________________
 // - - - Р Е Н Д Е Р   К А Р Т  - - -
+
+
 function renderCardsTo(cardsArray, target_id, isSecret = false) {
     // 1. ЖЕСТКАЯ ЗАЩИТА: Если селектор не передан, пустой или не является строкой
     if (!target_id || typeof target_id !== 'string') {

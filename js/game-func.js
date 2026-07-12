@@ -455,3 +455,46 @@ function loadSeptemberWeather() {
             console.log("[STORY]: Данные синоптика успешно зашиты в стейт:", StoryState.weatherData);
         });
 }
+
+
+// Функция, которая слепо берет текущий стейт из памяти и наполняет HTML
+function updateWholeTableUI() {
+    if (!players || !Array.isArray(players)) return;
+
+    players.forEach(player => {
+        const playerEl = document.querySelector(`#${player.id}`);
+        if (!playerEl) return;
+
+        // 1. Обновляем имя бота (вставляем вместо "загрузка...")
+        if (player.id !== 'player') {
+            const nameEl = playerEl.querySelector('.white');
+            if (nameEl && player.name) {
+                nameEl.textContent = player.name + ' ';
+            }
+
+            // 2. Обновляем гендерный маркер динамически
+            const genderEl = playerEl.querySelector('.gender-marker');
+            if (genderEl) {
+                genderEl.className = 'gender-marker'; // Сброс
+                if (player.gender === 'female' || player.gender === 'f') {
+                    genderEl.classList.add('gender-female');
+                } else {
+                    genderEl.classList.add('gender-male');
+                }
+            }
+        }
+
+        // 3. Обновляем баланс
+        const balanceId = player.id === 'player' ? '#p-balance' : `#bot-balance-${player.id.replace('bot-', '')}`;
+        const balanceEl = document.querySelector(balanceId);
+        if (balanceEl) {
+            balanceEl.textContent = `${player.budget}$`;
+        }
+    });
+
+    // 4. Обновляем банк
+    const bankEl = document.querySelector('#bank');
+    if (bankEl && PokerEngine.gameState) {
+        bankEl.textContent = ` ${PokerEngine.gameState.pot || 0} $ `;
+    }
+}

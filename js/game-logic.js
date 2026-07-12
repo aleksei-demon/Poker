@@ -50,24 +50,89 @@ const BOT_RESERVE = [
 
 
 // 1. Берем случайного бота из резерва на место Андрея
+// =============================================================================
+// ИНИЦИАЛИЗАЦИЯ УЧАСТНИКОВ И ПРОФИЛЕЙ (БЕТОННАЯ СТРУКТУРА)
+// =============================================================================
+
 // 1. Берем случайного бота из резерва на место Андрея для ПЕРВОЙ игры
+// (Предполагаем, что у ботов в BOT_RESERVE уже прописаны name, style, gender)
 const randomFirstBot = BOT_RESERVE[Math.floor(Math.random() * BOT_RESERVE.length)];
 
 // 2. Инициализируем профили (Ветал и 404 всегда со старта)
+// gender может быть 'male' (m) или 'female' (f)
 const BOT_PROFILES = {
-    'bot-1': randomFirstBot,
-    'bot-2': { name: 'Ветал', style: 'MANIAC', bluffChance: 0.25, aggression: 2.5, looseFactor: 1.3 },
-    'bot-3': { name: '404', style: 'GTO', bluffChance: 0.12, aggression: 1.0, looseFactor: 1.0 }
+    'bot-1': {
+        name: randomFirstBot.name,
+        style: randomFirstBot.style,
+        gender: randomFirstBot.gender || 'male', // Страховка дефолта
+        bluffChance: randomFirstBot.bluffChance || 0.15,
+        aggression: randomFirstBot.aggression || 1.2,
+        looseFactor: randomFirstBot.looseFactor || 1.1
+    },
+    'bot-2': {
+        name: 'Ветал',
+        style: 'MANIAC',
+        gender: 'male',
+        bluffChance: 0.25,
+        aggression: 2.5,
+        looseFactor: 1.3
+    },
+    'bot-3': {
+        name: '404',
+        style: 'GTO',
+        gender: 'female',
+        bluffChance: 0.12,
+        aggression: 1.0,
+        looseFactor: 1.0
+    }
 };
 
-// 3. СВЯЗЫВАЕМ СТАРТОВЫЙ МАССИВ ИГРОКОВ С ПРОФИЛЯМИ
+// 3. СВЯЗЫВАЕМ СТАРТОВЫЙ МАССИВ ИГРОКОВ С ПРОФИЛЯМИ (С полной передачей гендера!)
 let players = [
-    { id: 'player', name: 'Вы', budget: 100, cards: [] },
-    { id: 'bot-1', name: BOT_PROFILES['bot-1'].name, budget: 100, strategy: BOT_PROFILES['bot-1'].style, cards: [] },
-    { id: 'bot-2', name: BOT_PROFILES['bot-2'].name, budget: 100, strategy: BOT_PROFILES['bot-2'].style, cards: [] },
-    { id: 'bot-3', name: BOT_PROFILES['bot-3'].name, budget: 100, strategy: BOT_PROFILES['bot-3'].style, cards: [] }
+    {
+        id: 'player',
+        name: 'Вы',
+        budget: 100,
+        cards: [],
+        gender: 'male' // Или любой дефолт, для игрока обычно UI статичен
+    },
+    {
+        id: 'bot-1',
+        name: BOT_PROFILES['bot-1'].name,
+        gender: BOT_PROFILES['bot-1'].gender, // ВОТ ОН, КЛЮЧЕВОЙ ФИКС ДЛЯ ИНДИКАТОРА!
+        budget: 100,
+        strategy: BOT_PROFILES['bot-1'].style,
+        cards: [],
+        // Доп. переменные для ИИ, чтобы runBotLogic брал их прямо отсюда
+        bluffChance: BOT_PROFILES['bot-1'].bluffChance,
+        aggression: BOT_PROFILES['bot-1'].aggression,
+        looseFactor: BOT_PROFILES['bot-1'].looseFactor
+    },
+    {
+        id: 'bot-2',
+        name: BOT_PROFILES['bot-2'].name,
+        gender: BOT_PROFILES['bot-2'].gender,
+        budget: 100,
+        strategy: BOT_PROFILES['bot-2'].style,
+        cards: [],
+        bluffChance: BOT_PROFILES['bot-2'].bluffChance,
+        aggression: BOT_PROFILES['bot-2'].aggression,
+        looseFactor: BOT_PROFILES['bot-2'].looseFactor
+    },
+    {
+        id: 'bot-3',
+        name: BOT_PROFILES['bot-3'].name,
+        gender: BOT_PROFILES['bot-3'].gender,
+        budget: 100,
+        strategy: BOT_PROFILES['bot-3'].style,
+        cards: [],
+        bluffChance: BOT_PROFILES['bot-3'].bluffChance,
+        aggression: BOT_PROFILES['bot-3'].aggression,
+        looseFactor: BOT_PROFILES['bot-3'].looseFactor
+    }
 ];
 
+console.log("[ENGINE INIT]: Профили игроков и гендерные маркеры успешно разложены по памяти.", players);
 function startNextTournamentRound() {
     console.log("=== СМЕНА СОСТАВА: ЗА СТОЛ САДЯТСЯ НОВЫЕ ИГРОКИ ===");
 
@@ -950,53 +1015,54 @@ const PokerEngine = {
     },
 
     syncBalancesUI(playerObj) {
+        if (!playerObj || !playerObj.id) return;
+
+        // 1. Находим контейнер игрока или бота по его жесткому ID (#player, #bot-1, #bot-2, #bot-3)
+        const playerEl = document.querySelector(`#${playerObj.id}`) || document.querySelector(`.${playerObj.id}`);
+        if (!playerEl) return;
+
+        // 2. Обновляем баланс
+        const balanceSpan = playerEl.querySelector(`#bot-balance-${playerObj.id.replace('bot-', '')}`)
+            || playerEl.querySelector('#p-balance')
+            || playerEl.querySelector('[id*="balance"]');
+
+        if (balanceSpan) {
+            balanceSpan.textContent = `${playerObj.budget}$`;
+        }
+
+        // Обновляем общую кассу (банк) на столе
         const bankEl = document.querySelector('#bank');
-        if (bankEl) bankEl.textContent = ` ${this.gameState.pot} $ `;
-
-        let balanceSelector = '#p-balance';
-        let nameSelector = null;
-        let fallbackBotSelector = null; // Подстраховка для поиска внутри контейнера бота
-
-        if (playerObj.id === 'bot-1') {
-            balanceSelector = '#bot-balance-1';
-            nameSelector = '#bot-1 .white';
-            fallbackBotSelector = '#bot-1';
-        }
-        if (playerObj.id === 'bot-2') {
-            balanceSelector = '#bot-balance-2';
-            nameSelector = '#bot-2 .white';
-            fallbackBotSelector = '#bot-2';
-        }
-        if (playerObj.id === 'bot-3') {
-            balanceSelector = '#bot-balance-3';
-            nameSelector = '#bot-3 .white';
-            fallbackBotSelector = '#bot-3';
+        if (bankEl && this.gameState && this.gameState.pot !== undefined) {
+            bankEl.textContent = `${this.gameState.pot}$`;
         }
 
-        // Синхронизируем баланс
-        const balanceEl = document.querySelector(balanceSelector);
-        if (balanceEl) balanceEl.textContent = ` ${playerObj.budget}$`;
+        // 3. ОБНОВЛЕНИЕ ДАННЫХ ДЛЯ БОТОВ (Имя + Пол)
+        if (playerObj.id !== 'player') {
 
-        // СИНХРОНИЗАЦИЯ ИМЕНИ
-        if (nameSelector) {
-            let nameEl = document.querySelector(nameSelector);
+            // ЖЕСТКИЙ ФИКС ИМЕНИ: Находим элемент, где сидит имя бота, и ставим новое из памяти
+            const nameEl = playerEl.querySelector('.bot-name')
+                || playerEl.querySelector('.name')
+                || playerEl.querySelector('strong')
+                || playerEl.querySelector('.player-name'); // проверь какой класс у тебя в Virtual DOM
 
-            // ПОДСТРАХОВКА: Если селектор с классом .white не найден, ищем заголовок h3 или span внутри контейнера бота
-            if (!nameEl && fallbackBotSelector) {
-                const botContainer = document.querySelector(fallbackBotSelector);
-                if (botContainer) {
-                    nameEl = botContainer.querySelector('h3') || botContainer.querySelector('.name') || botContainer.querySelector('span');
-                }
+            if (nameEl && playerObj.name) {
+                console.log(`[UI FIX]: Меняем имя на слоте ${playerObj.id}: на ${playerObj.name}`);
+                nameEl.textContent = playerObj.name;
             }
 
-            // Обновляем текст, если элемент найден
-            if (nameEl) {
-                if (nameEl.textContent.trim() !== playerObj.name.trim()) {
-                    console.log(`[UI ENGINE] Меняем имя на плашке ${playerObj.id}: с "${nameEl.textContent.trim()}" на "${playerObj.name}"`);
-                    nameEl.textContent = `${playerObj.name} `;
+            // ЖЕСТКИЙ ФИКС ПОЛА: Находим индикатор
+            const genderMarker = playerEl.querySelector('.gender-marker') || playerEl.querySelector('.gender');
+            if (genderMarker) {
+                // Счищаем всё старое
+                genderMarker.classList.remove('gender-male', 'gender-female', 'male', 'female');
+
+                // Ставим актуальный класс пола из объекта
+                if (playerObj.gender === 'female' || playerObj.gender === 'f') {
+                    genderMarker.classList.add('gender-female');
+                } else {
+                    genderMarker.classList.add('gender-male');
                 }
-            } else {
-                console.warn(`[UI ENGINE] Не удалось найти элемент имени для ${playerObj.id}. Проверь классы в HTML!`);
+                console.log(`[UI FIX]: Сменили пол на слоте ${playerObj.id} для ${playerObj.name} -> ${playerObj.gender}`);
             }
         }
     },
@@ -1401,8 +1467,7 @@ function evaluatePreflopHand(cards) {
 // ТОЧКА ЗАПУСКА ИГРЫ
 document.addEventListener('DOMContentLoaded', () => {
     console.log('[DOM]: Инициализация интерфейса покера.');
-    // 1. Сначала принудительно синхронизируем данные из JS в UI (маскируем Андрея на Гарика/Платона)
-    players.forEach(p => PokerEngine.syncBalancesUI(p));
+
     // 2. И только потом запускаем первую раздачу
     startNewHand();
     loadSeptemberWeather();
@@ -1410,6 +1475,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Запуск новой раздачи
 function startNewHand() {
+    updateWholeTableUI();
+
     // =============================================================================
     //  STORY DLC: БЕЗУПРЕЧНЫЙ ПЕРЕХВАТ - ВЕТАЛ ❤️ 404
     // =============================================================================
