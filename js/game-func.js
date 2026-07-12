@@ -458,35 +458,51 @@ function loadSeptemberWeather() {
 
 
 // Функция, которая слепо берет текущий стейт из памяти и наполняет HTML
+
 function updateWholeTableUI() {
     if (!players || !Array.isArray(players)) return;
 
-    players.forEach(player => {
-        const playerEl = document.querySelector(`#${player.id}`);
-        if (!playerEl) return;
+    players.forEach((player, index) => {
+        // ЖЕСТКИЙ ФИКС: Сначала отсекаем живого игрока, у него свой статический ID
+        if (player.id === 'player') {
+            const balanceEl = document.querySelector('#p-balance');
+            if (balanceEl) balanceEl.textContent = `${player.budget}$`;
+            return; // Выходим из итерации для игрока, ботов не считаем
+        }
 
-        // 1. Обновляем имя бота (вставляем вместо "загрузка...")
-        if (player.id !== 'player') {
-            const nameEl = playerEl.querySelector('.white');
-            if (nameEl && player.name) {
-                nameEl.textContent = player.name + ' ';
-            }
+        // Теперь здесь гарантированно только боты. 
+        // Чтобы индексы не сдвигались из-за игрока в массиве, проверяем реальный ID посадочного места бота:
+        // Если у тебя боты в массиве идут строго под своими ID 'bot-1', 'bot-2', 'bot-3', завяжемся на них напрямую!
+        const slotId = player.id; // 'bot-1', 'bot-2' или 'bot-3'
+        const playerEl = document.querySelector(`#${slotId}`);
 
-            // 2. Обновляем гендерный маркер динамически
-            const genderEl = playerEl.querySelector('.gender-marker');
-            if (genderEl) {
-                genderEl.className = 'gender-marker'; // Сброс
-                if (player.gender === 'female' || player.gender === 'f') {
-                    genderEl.classList.add('gender-female');
-                } else {
-                    genderEl.classList.add('gender-male');
-                }
+        if (!playerEl) {
+            console.warn(`[UI REJECT]: Не найден HTML-слот #${slotId} для бота ${player.name}`);
+            return;
+        }
+
+        // 1. Обновляем имя бота
+        const nameEl = playerEl.querySelector('.white');
+        if (nameEl && player.name) {
+            nameEl.textContent = player.name + ' ';
+        }
+
+        // 2. Обновляем гендерный маркер
+        const genderEl = playerEl.querySelector('.gender-marker');
+        if (genderEl) {
+            genderEl.className = 'gender-marker'; // Полный сброс старого пола
+            const currentGender = String(player.gender || '').toLowerCase().trim();
+
+            if (currentGender === 'female' || currentGender === 'f') {
+                genderEl.classList.add('gender-female');
+            } else {
+                genderEl.classList.add('gender-male');
             }
         }
 
-        // 3. Обновляем баланс
-        const balanceId = player.id === 'player' ? '#p-balance' : `#bot-balance-${player.id.replace('bot-', '')}`;
-        const balanceEl = document.querySelector(balanceId);
+        // 3. Обновляем бюджет бота
+        const botNum = slotId.replace('bot-', ''); // Вытащит 1, 2 или 3
+        const balanceEl = document.querySelector(`#bot-balance-${botNum}`);
         if (balanceEl) {
             balanceEl.textContent = `${player.budget}$`;
         }

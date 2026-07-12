@@ -8,8 +8,8 @@
 let defeatedBots = [];
 
 // 1. Конфигурация игры (Глобальные переменные)
-let SMALL_BLIND = 5;
-let BIG_BLIND = 10;
+let SMALL_BLIND = 10;
+let BIG_BLIND = 20;
 
 
 
@@ -17,11 +17,12 @@ let BIG_BLIND = 10;
 
 // Внутри PokerEngine.gameState или как константу сверху файла:
 const TOURNAMENT_STRUCTURE = [
-    { level: 1, sb: 5, bb: 10 },
-    { level: 2, sb: 10, bb: 20 },
-    { level: 3, sb: 15, bb: 30 },
-    { level: 4, sb: 25, bb: 50 },
-    { level: 5, sb: 50, bb: 100 } // На этом уровне со стеком 100$ начнется жесткое месиво
+    // { level: 1, sb: 5, bb: 10 },
+    { level: 1, sb: 10, bb: 20 },
+    { level: 2, sb: 15, bb: 30 },
+    { level: 3, sb: 25, bb: 50 },
+    { level: 4, sb: 50, bb: 100 },
+    { level: 5, sb: 50, bb: 100 }     // На этом уровне со стеком 100$ начнется жесткое месиво
 ];
 
 let CURRENT_DEALER = 0;
