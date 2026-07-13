@@ -219,46 +219,75 @@ function makeAction(type) {
     PokerEngine.executeAction('player', actionType);
 }
 
-function calculatePots(activePlayers) {
-    let playerBets = activePlayers.map(p => ({
+function calculatePots(allTablePlayers, activeShowdownPlayerIds) {
+    // 1. Собираем ставки ВООБЩЕ ВСЕХ игроков, которые вкладывались в этот банк (даже сбросивших)
+    let playerBets = allTablePlayers.map(p => ({
         id: p.id,
-        name: p.name,
         amount: PokerEngine.gameState.totalBets ? (PokerEngine.gameState.totalBets[p.id] || 0) : 0,
-        isAllIn: p.budget === 0
+        // Игрок реально в All-In для сайд-пота только если он активен, его бюджет 0, 
+        // И кто-то поставил больше него (то есть его ставку зарейзили, а у него не было фишек доставиться)
+        isAllIn: p.budget === 0 && activeShowdownPlayerIds.includes(p.id)
     }));
+
+    // Проверяем, есть ли реальный ва-банк, который кто-то превысил.
+    // Если все внесли одинаково, сбрасываем флаги All-In, чтобы не плодить ложные побочные банки.
+    playerBets.forEach(p => {
+        if (p.isAllIn) {
+            const anyoneBetMore = playerBets.some(other => other.amount > p.amount);
+            if (!anyoneBetMore) {
+                p.isAllIn = false; // Это не создающий сайд-пот олл-ин, все уравнялись
+            }
+        }
+    });
 
     let pots = [];
 
+    // Крутим цикл, пока в массиве ставок есть хоть какие-то фишки
     while (playerBets.some(p => p.amount > 0)) {
         let contributors = playerBets.filter(p => p.amount > 0);
+
+        // Ищем создателей сайд-потов (активных олл-инеров)
         let allInPlayers = contributors.filter(p => p.isAllIn);
 
         let minBet;
         if (allInPlayers.length > 0) {
+            // Если есть зарейженный олл-ин, уровень банка отсекается по его ставке
             minBet = Math.min(...allInPlayers.map(p => p.amount));
         } else {
+            // Если олл-инов нет, забираем остатки максимальных ставок
             minBet = Math.min(...contributors.map(p => p.amount));
         }
 
         let potAmount = 0;
-        let eligiblePlayerIds = [];
+        let allowedPlayers = [];
 
         playerBets.forEach(p => {
             if (p.amount > 0) {
                 let contribution = Math.min(p.amount, minBet);
                 potAmount += contribution;
                 p.amount -= contribution;
-                eligiblePlayerIds.push(p.id);
+
+                // Претендовать на этот кусок пирога могут ТЫЛЬКО те, кто не выкинул карты в Fold
+                if (activeShowdownPlayerIds.includes(p.id)) {
+                    allowedPlayers.push(p.id);
+                }
             }
+        });
+
+        // Зачищаем флаг олл-ина у тех, чью ставку мы полностью «скушали» на этом уровне
+        playerBets.forEach(p => {
+            if (p.amount === 0) p.isAllIn = false;
         });
 
         pots.push({
             amount: potAmount,
-            allowedPlayers: eligiblePlayerIds
+            allowedPlayers: allowedPlayers
         });
     }
 
-    return pots;
+    // Если вдруг из-за фолдов создался пустой банк или банк без претендентов, 
+    // склеиваем его с предыдущим (основным) банком
+    return pots.filter(pot => pot.amount > 0 && pot.allowedPlayers.length > 0);
 }
 
 function showCustomConfirm(message) {

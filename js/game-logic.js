@@ -34,7 +34,6 @@ function getNextActivePlayerIndex(startIndex) {
 }
 
 // Пул новых ботов, которые ждут своей очереди в клубе
-// Пул новых ботов, которые ждут своей очереди в клубе
 const BOT_RESERVE = [
     { name: 'Аркадий', gender: 'male', style: 'AGRESSIVE', bluffChance: 0.15, aggression: 2.2, looseFactor: 1.1 },
     { name: 'Платон', gender: 'male', style: 'MATH', bluffChance: 0.00, aggression: 1.0, looseFactor: 0.9 },
@@ -626,29 +625,84 @@ const PokerEngine = {
         // Финансовый расчет распределения потов (с учетом Side Pots)
         setTimeout(() => {
             console.log("--- РАСЧЕТ БАНКОВ (SIDE POTS) ---");
-            const finalPots = calculatePots(activePlayers);
+
+            // 1. Передаем глобальный массив players (чтобы собрать фишки со всех, даже сбросивших)
+            // 2. Передаем массив ID только активных участников вскрытия
+            const activeIds = activePlayers.map(p => p.id);
+            const finalPots = calculatePots(players, activeIds);
             let totalDelay = 0;
 
+            // =========================================================================
+            // ЖЕСТКИЙ АНТИ-БАГ ХАК ДЛЯ ИГРЫ 1 НА 1 (HEADS-UP)
+            // Если за столом осталось всего 2 живых претендента на вскрытии, 
+            // никаких "побочных" банков быть не может. Склеиваем всё в один Основной банк!
+            // =========================================================================
+            if (activePlayers.length <= 2 && finalPots.length > 1) {
+                console.warn(`[POTS FIX]: Обнаружен баг calculatePots в игре 1х1. Склеиваем ${finalPots.length} банков в один.`);
+
+                // 1. Считаем общую сумму всех некорректно нарезанных банков
+                const totalAmount = finalPots.reduce((sum, p) => sum + p.amount, 0);
+
+                // 2. БЕЗОПАСНЫЙ МУТАЦИОННЫЙ ФИКС: 
+                // Очищаем массив finalPots с 0-го индекса до конца и сразу вставляем один правильный банк
+                finalPots.splice(0, finalPots.length, {
+                    amount: totalAmount,
+                    allowedPlayers: activePlayers.map(p => p.id)
+                });
+            }
+
             finalPots.forEach((pot, index) => {
+                // Если банк пустой (баг расчетов), просто пропускаем его
+                if (pot.amount <= 0) return;
+
                 setTimeout(() => {
+                    // Отбираем игроков, которые имеют право на этот конкретный банк
                     let candidates = showdownResults.filter(res => pot.allowedPlayers.includes(res.id));
+
+                    // Сортируем по убыванию силы комбинации
                     candidates.sort((a, b) => b.score - a.score);
 
-                    let potWinner = candidates[0];
-                    let potType = index === 0 ? "Основной банк" : `Побочный банк #${index}`;
-                    let winText = `${potWinner.name} забирает ${potType} (${pot.amount} $) с комбинацией: ${potWinner.handName}! 🏆`;
+                    if (candidates.length === 0) return;
 
-                    if (potWinner.id === 'player') {
-                        winText = `Вы забираете ${potType} (${pot.amount} $)! 🎉🏆`;
-                    }
+                    // =========================================================================
+                    // РЕШЕНИЕ ПРОБЛЕМЫ НИЧЬЕЙ (SPLIT POT)
+                    // Находим ВСЕХ игроков, у которых максимальный score равен лучшему
+                    // =========================================================================
+                    const maxScore = candidates[0].score;
+                    const potWinners = candidates.filter(c => c.score === maxScore);
 
-                    showMessage_(winText, 3000);
+                    // Делим сумму банка на количество победителей
+                    const shareAmount = Math.floor(pot.amount / potWinners.length);
+                    const potType = index === 0 ? "Основной банк" : `Побочный банк #${index}`;
 
-                    const winnerObj = players.find(p => p.id === potWinner.id);
-                    if (winnerObj) {
-                        winnerObj.budget += pot.amount;
-                        this.syncBalancesUI(winnerObj);
-                    }
+                    potWinners.forEach(potWinner => {
+                        let winText = `${potWinner.name} забирает часть банка ${potType} (${shareAmount} $) с комбинацией: ${potWinner.handName}! 🏆`;
+
+                        if (potWinner.id === 'player') {
+                            winText = `Вы забираете часть банка ${potType} (${shareAmount} $)! 🎉🏆`;
+                        }
+
+                        // Если победитель один — текст стандартный
+                        if (potWinners.length === 1) {
+                            winText = potWinner.id === 'player'
+                                ? `Вы забираете ${potType} (${pot.amount} $)! 🎉🏆`
+                                : `${potWinner.name} забирает ${potType} (${pot.amount} $) с комбинацией: ${potWinner.handName}! 🏆`;
+                        }
+
+                        showMessage_(winText, 3000);
+
+                        // Начисляем деньги в память и обновляем UI
+                        const winnerObj = players.find(p => p.id === potWinner.id);
+                        if (winnerObj) {
+                            // Если деление неровное, последнему может упасть на 1$ меньше/больше, 
+                            // но для простоты отдаем ровную долю shareAmount
+                            winnerObj.budget += (potWinners.length === 1) ? pot.amount : shareAmount;
+
+                            // Используем твой починенный syncBalancesUI!
+                            this.syncBalancesUI(winnerObj);
+                        }
+                    });
+
                 }, totalDelay);
 
                 totalDelay += 3500;
@@ -660,7 +714,6 @@ const PokerEngine = {
                 this.gameState.totalBets = {};
 
                 // Вызываем проверку. Если она вернула true — стопаем движок. 
-                // Всё остальное сделают внутренние таймеры checkTableBankruptcy
                 if (this.checkTableBankruptcy()) {
                     console.log("[ENGINE STOP]: Перехват банкротства сработал. Ждем таймеры сцен.");
                     return;
