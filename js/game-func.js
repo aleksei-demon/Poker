@@ -453,19 +453,22 @@ function fetchDetailedWeather(lat = 50.00, lon = 36.23) {
 function loadSeptemberWeather() {
     if (StoryState.weatherLoaded) return;
 
-    // Сначала определяем координаты по IP-адресу игрока
-    fetch('https://ip-api.com/json/?fields=status,lat,lon')
+    // Сначала определяем координаты по IP-адресу игрока через HTTPS-совместимый API
+    fetch('https://ipwho.is/')
         .then(res => res.json())
         .then(geo => {
-            if (geo && geo.status === 'success') {
-                console.log(`[STORY IP]: Координаты определены (${geo.lat}, ${geo.lon}). Запрашиваем погоду...`);
-                return fetchDetailedWeather(geo.lat, geo.lon);
+            // ipwho.is возвращает geo.success (true/false) и latitude/longitude
+            if (geo && geo.success === true) {
+                const lat = geo.latitude;
+                const lon = geo.longitude;
+                console.log(`[STORY IP]: Координаты определены (${lat}, ${lon}). Запрашиваем погоду...`);
+                return fetchDetailedWeather(lat, lon);
             } else {
-                throw new Error('ip-api returned failed status');
+                throw new Error('ipwho.is returned failed status');
             }
         })
         .catch(err => {
-            console.warn("[STORY IP]: Не определили IP, переключаемся на Харьков по умолчанию.");
+            console.warn("[STORY IP]: Не определили IP, переключаемся на Харьков по умолчанию.", err);
             // 50.00, 36.23 — координаты Харькова
             return fetchDetailedWeather(50.00, 36.23);
         })
