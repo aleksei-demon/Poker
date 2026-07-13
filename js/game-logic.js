@@ -8,21 +8,16 @@
 let defeatedBots = [];
 
 // 1. Конфигурация игры (Глобальные переменные)
-let SMALL_BLIND = 10;
-let BIG_BLIND = 20;
-
-
-
-
-
+let SMALL_BLIND = 0;
+let BIG_BLIND = 0;
+let CURRENT_TOURNAMENT_LEVEL = 1; // Стартуем всегда с 1 уровня
 // Внутри PokerEngine.gameState или как константу сверху файла:
 const TOURNAMENT_STRUCTURE = [
-    // { level: 1, sb: 5, bb: 10 },
-    { level: 1, sb: 10, bb: 20 },
-    { level: 2, sb: 15, bb: 30 },
-    { level: 3, sb: 25, bb: 50 },
-    { level: 4, sb: 50, bb: 100 },
-    { level: 5, sb: 50, bb: 100 }     // На этом уровне со стеком 100$ начнется жесткое месиво
+    { level: 1, sb: 5, bb: 10 },
+    { level: 2, sb: 10, bb: 20 },
+    { level: 3, sb: 20, bb: 40 },
+    { level: 4, sb: 40, bb: 80 },
+    { level: 5, sb: 50, bb: 100 },// На этом уровне со стеком 100$ начнется жесткое месиво
 ];
 
 let CURRENT_DEALER = 0;
@@ -39,18 +34,22 @@ function getNextActivePlayerIndex(startIndex) {
 }
 
 // Пул новых ботов, которые ждут своей очереди в клубе
+// Пул новых ботов, которые ждут своей очереди в клубе
 const BOT_RESERVE = [
-    { name: 'Аркадий', style: 'AGRESSIVE', bluffChance: 0.15, aggression: 2.2, looseFactor: 1.1 },
-    { name: 'Платон', style: 'MATH', bluffChance: 0.00, aggression: 1.0, looseFactor: 0.9 },
-    { name: 'Федя', style: 'BLUFF', bluffChance: 0.40, aggression: 1.6, looseFactor: 1.2 },
-    { name: 'Михалыч', style: 'ROCK', bluffChance: 0.02, aggression: 0.8, looseFactor: 0.85 },
-    { name: 'Гарик', style: 'LOOSE', bluffChance: 0.20, aggression: 1.4, looseFactor: 1.4 },
-    { name: 'Сентябрь', style: 'RANDOM', bluffChance: 0.50, aggression: 1.8, looseFactor: 1.0 },
-    { name: 'Болт', style: 'BOLT', bluffChance: 0.99, aggression: 5.0, looseFactor: 2.0 },
+    { name: 'Аркадий', gender: 'male', style: 'AGRESSIVE', bluffChance: 0.15, aggression: 2.2, looseFactor: 1.1 },
+    { name: 'Платон', gender: 'male', style: 'MATH', bluffChance: 0.00, aggression: 1.0, looseFactor: 0.9 },
+    { name: 'Федя', gender: 'male', style: 'BLUFF', bluffChance: 0.40, aggression: 1.6, looseFactor: 1.2 },
+    { name: 'Михалыч', gender: 'male', style: 'ROCK', bluffChance: 0.02, aggression: 0.8, looseFactor: 0.85 },
+    { name: 'Гарик', gender: 'male', style: 'LOOSE', bluffChance: 0.20, aggression: 1.4, looseFactor: 1.4 },
+    { name: 'Сентябрь', gender: 'male', style: 'RANDOM', bluffChance: 0.50, aggression: 1.8, looseFactor: 1.0 },
+    { name: 'Болт', gender: 'male', style: 'BOLT', bluffChance: 0.99, aggression: 5.0, looseFactor: 2.0 },
+
+    // Добавляем девчонок в резерв, чтобы протестировать смену пола на полную!
+    { name: 'Катя', gender: 'female', style: 'MATH', bluffChance: 0.05, aggression: 1.2, looseFactor: 0.95 },
+    { name: 'Диана', gender: 'female', style: 'AGRESSIVE', bluffChance: 0.25, aggression: 2.0, looseFactor: 1.15 },
+    { name: 'Ленка', gender: 'female', style: 'BLUFF', bluffChance: 0.45, aggression: 1.5, looseFactor: 1.3 }
 ];
 
-
-// 1. Берем случайного бота из резерва на место Андрея
 // =============================================================================
 // ИНИЦИАЛИЗАЦИЯ УЧАСТНИКОВ И ПРОФИЛЕЙ (БЕТОННАЯ СТРУКТУРА)
 // =============================================================================
@@ -145,20 +144,26 @@ function startNextTournamentRound() {
     BOT_PROFILES['bot-2'] = shuffledReserve[1];
     BOT_PROFILES['bot-3'] = shuffledReserve[2];
 
-    // 3. Синхронизируем массив игроков (без уничтожения ссылок и ломания карт)
+    // 3. Синхронизируем массив игроков (с ПОЛНЫМ переносом гендера!)
     players.forEach(p => {
         if (p.id !== 'player') {
             const currentProfile = BOT_PROFILES[p.id];
 
             p.name = currentProfile.name;
+            p.gender = currentProfile.gender;   // <--- ЖЕСТКИЙ ФИКС: Сохраняем пол в массив players!
             p.strategy = currentProfile.style; // Железно пишем актуальный стиль для runBotLogic!
             p.budget = 100;                     // Сбрасываем стек до 100$ для защиты титула
+
+            // До кучи переносим ИИ-параметры, чтобы боты не тупили со старыми настройками
+            p.bluffChance = currentProfile.bluffChance || 0.15;
+            p.aggression = currentProfile.aggression || 1.2;
+            p.looseFactor = currentProfile.looseFactor || 1.1;
 
             // Массив p.cards НЕ очищаем здесь вслепую, чтобы не сломать раздачу движка!
         }
     });
 
-    console.log(`[TOURNAMENT]: Состав обновлен. На местах: ${players[1].name}, ${players[2].name}, ${players[3].name}`);
+    console.log(`[TOURNAMENT]: Состав обновлен. На местах: ${players[1].name} (${players[1].gender}), ${players[2].name} (${players[2].gender}), ${players[3].name} (${players[3].gender})`);
 
     // 4. СБРОС UI: возвращаем боксам ботов живой вид и обновляем данные (имена и балансы)
     players.forEach(p => {
@@ -175,6 +180,11 @@ function startNextTournamentRound() {
         // Обновляем балансы и имена на экране (у ботов встанут новые имена и по 100$)
         PokerEngine.syncBalancesUI(p);
     });
+
+    // КРИТИЧЕСКИЙ ВЫЗОВ: Принудительно заставляем таблицу перерисовать имена и МАРКЕРЫ ПОЛА!
+    if (typeof updateWholeTableUI === 'function') {
+        updateWholeTableUI();
+    }
 
     // 5. Сбрасываем блайнды на стартовый Уровень 1
     if (PokerEngine.gameState) {
@@ -665,7 +675,7 @@ const PokerEngine = {
 
     checkTableBankruptcy() {
         // =========================================================================
-        // ЖЕСТКАЯ ЗАЩИТА: Выбивать или спасать можно ТОЛЬКО когда раздача ОКОНЧЕНА.
+        // ЖЕСТКАЯ ЗА ЗАЩИТА: Выбивать или спасать можно ТОЛЬКО когда раздача ОКОНЧЕНА.
         // Если идет PREFLOP, FLOP, TURN или RIVER — игроки с 0 балансом сидят в All-In!
         // =========================================================================
         if (PokerEngine && PokerEngine.gameState) {
@@ -728,54 +738,51 @@ const PokerEngine = {
         // =========================================================================
         // 2. ДУШЕВНЫЙ ПЕРЕХВАТ: ЕСЛИ КТО-ТО ОБАНКРОТИЛСЯ (ПОСЛЕ ВСКРЫТИЯ КАРТ)
         // =========================================================================
-        const playerObj = players.find(p => p.id === 'player');
         const luckyReceiver = players.find(p => p.budget <= 0);
 
+        // Если есть обнулившийся игрок и сработал шанс 50%
         if (luckyReceiver && !StoryState.mihalichSavedPlayer && Math.random() < 0.5) {
 
-            // Динамически определяем сумму подарка и порог для донора
-            // Тебе нужно 20$ (донор должен иметь >= 45$), а для 404 достаточно 5$ (донор >= 15$)
+            let saviorBot = null;
             const giftAmount = (luckyReceiver.id === 'player') ? 20 : 5;
             const minDonorBudget = (luckyReceiver.id === 'player') ? 45 : 15;
 
-            // ИЩЕМ ДОНОРОВ: Исключаем игрока, саму цель и бота 404
-            const kindBots = players.filter(p =>
-                p.id !== 'player' &&
-                p.id !== luckyReceiver.id &&
-                p.name !== '404' &&
-                !p.id.includes('404') &&
-                p.budget >= minDonorBudget
-            );
-
-            // ОСОБЫЙ СЛУЧАЙ: Если обнулилась 404, её ВСЕГДА спасает строго Ветал (если у него есть деньги)
-            let saviorBot = null;
+            // СЦЕНАРИЙ А: Обнулилась 404 -> Её спасает СТРОГО Ветал (если у него есть деньги)
             if (luckyReceiver.name === '404') {
                 saviorBot = players.find(p => p.name === 'Ветал' && p.budget >= minDonorBudget);
-            } else if (kindBots.length > 0) {
-                // Если спасают тебя — выбираем рандомного мужика из добрых ботов
-                saviorBot = kindBots[Math.floor(Math.random() * kindBots.length)];
             }
+            // СЦЕНАРИЙ Б: Обнулился Человек (игрок) -> Его спасает любой живой бот, КРОМЕ 404
+            else if (luckyReceiver.id === 'player') {
+                const kindBots = players.filter(p =>
+                    p.id !== 'player' &&
+                    p.name !== '404' &&
+                    !p.id.includes('404') &&
+                    p.budget >= minDonorBudget
+                );
+                if (kindBots.length > 0) {
+                    saviorBot = kindBots[Math.floor(Math.random() * kindBots.length)];
+                }
+            }
+            // Все остальные случаи (бот обнулил бота, или 404 пытается кого-то спасти) — игнорируются.
+            // saviorBot останется null, и сработает стандартный вылет.
 
-            // Если спаситель найден — запускаем магию
+            // Если спаситель найден по одному из двух разрешенных сценариев — запускаем магию
             if (saviorBot) {
                 StoryState.mihalichSavedPlayer = true;
                 console.log(`[STORY]: Бот ${saviorBot.name} спасает ${luckyReceiver.name} на сумму ${giftAmount}$.`);
 
                 // А. УНИВЕРСАЛЬНАЯ ФУНКЦИЯ ОБНОВЛЕНИЯ DOM
                 const updateVisualBalance = (pObject, newBalance) => {
-                    // Жесткий фикс для ТЕБЯ (твоя плашка в шапке)
                     if (pObject.id === 'player') {
                         const myBalanceSpan = document.getElementById('p-balance') || document.querySelector('#p-balance');
                         if (myBalanceSpan) myBalanceSpan.innerText = ` ${newBalance} $`;
                     }
 
-                    // Жесткий фикс для 404 (прямой наводкой в её спан баланса)
                     if (pObject.name === '404') {
                         const bot3Balance = document.getElementById('bot-balance-3') || document.querySelector('#bot-balance-3');
                         if (bot3Balance) bot3Balance.innerText = ` ${newBalance} $`;
                     }
 
-                    // Стандартное обновление классов вылета для плашек на столе
                     let el = document.getElementById(pObject.id) || document.querySelector(pObject.id.startsWith('#') ? pObject.id : `#${pObject.id}`);
                     if (!el && pObject.id === 'player') el = document.querySelector('.player');
 
@@ -794,7 +801,7 @@ const PokerEngine = {
                     }
                 };
 
-                // Б. МГНОВЕННО фиксируем балансы в памяти согласно сценарию (20$ или 5$)
+                // Б. МГНОВЕННО фиксируем балансы в памяти
                 saviorBot.budget -= giftAmount;
                 luckyReceiver.budget = giftAmount;
 
@@ -826,7 +833,6 @@ const PokerEngine = {
 
                 // Г. СЦЕНАРНЫЕ РЕПЛИКИ И ДИАЛОГИ
                 if (luckyReceiver.id === 'player') {
-                    // Сценарий: Спасают тебя (на 20$)
                     setTimeout(() => {
                         const phrases = {
                             'Михалыч': "Держи двадцатку. Посиди ещё немного с нами. Весело с тобой...",
@@ -838,27 +844,21 @@ const PokerEngine = {
                         botSay(formattedBotId, botPhrase, 4000);
                     }, 1000);
                 } else if (luckyReceiver.name === '404' && saviorBot.name === 'Ветал') {
-                    // Сценарий: Ветал спасает 404 (строго тет-а-тет, без лишних ушей)
-
-                    // 1. Сначала 404 просит о помощи
                     setTimeout(() => {
                         const formattedReceiverId = luckyReceiver.id.startsWith('#') ? luckyReceiver.id : `#${luckyReceiver.id}`;
                         botSay(formattedReceiverId, "- Подкинь пятёрку, а то вылечу...", 3000);
                     }, 1000);
 
-                    // 2. Через 3.5 секунды Ветал отвечает и пускает сердечко
                     setTimeout(() => {
                         const formattedSaviorId = saviorBot.id.startsWith('#') ? saviorBot.id : `#${saviorBot.id}`;
                         botSay(formattedSaviorId, "- Держи, мне не сложно.", 3000);
 
                         if (typeof spawnHeartBetween === 'function') {
-                            // Пускаем сердечко от Ветала к 404
                             spawnHeartBetween('#bot-2', '#bot-3');
                         }
                     }, 3500);
                 }
 
-                // Шаг 2: Чистим стол и запускаем новую раздачу (таймер увеличен до 7 сек, чтобы диалог 404 и Ветала успел прочитаться)
                 const totalDelay = (luckyReceiver.id === 'player') ? 5500 : 7000;
                 setTimeout(() => {
                     const actionPanel = document.querySelector('.action-buttons, .controls');
@@ -885,64 +885,47 @@ const PokerEngine = {
 
                 return true;
             }
+        }
 
-            // =========================================================================
-            // КРИТИЧЕСКИЙ ВЫЛЕТ ИГРОКА (Вторая половина вероятности — никто не помог)
-            // =========================================================================
-            else if (luckyReceiver.id === 'player') {
-                console.log("[STORY]: Спаситель не нашелся. Полный стоп игры для Игрока.");
+        // =========================================================================
+        // КРИТИЧЕСКИЙ ВЫЛЕТ ИГРОКА (Если обнулился Игрок, но никто не помог)
+        // =========================================================================
+        if (luckyReceiver && luckyReceiver.id === 'player') {
+            console.log("[STORY]: Спаситель не нашелся. Полный стоп игры для Игрока.");
 
-                // 1. Блокируем панель управления намертво
-                const actionPanel = document.querySelector('.action-buttons, .controls');
-                if (actionPanel) {
-                    actionPanel.style.opacity = '0.5';
-                    actionPanel.style.pointerEvents = 'none';
-                }
-
-                // 2. Тушим плашку игрока и его карты
-                const playerSeat = document.querySelector('.player, #player');
-                if (playerSeat) {
-                    playerSeat.classList.add('eliminated');
-                    playerSeat.style.opacity = '0.4';
-                }
-
-                // Никакой очистки стола! Игрок видит свои карты 15 секунд.
-
-                // 3. Через 15 секунд вызываем ТВОЁ кастомное окно
-                setTimeout(async () => {
-
-                    // Хак стиля: временно переопределим тексты кнопок в прототипе или создадим обертку?
-                    // Лучше вызовем функцию, а затем просто перепишем innerText её кнопок, 
-                    // чтобы не плодить дубликаты кода!
-
-                    const messageText = "БАНКРОТ. Мужики сочувственно промолчали. Фишки кончились, но жизнь продолжается...";
-
-                    // Запускаем окно
-                    const confirmPromise = showCustomConfirm(messageText);
-
-                    // Так как showCustomConfirm мгновенно вешает элементы в DOM, 
-                    // мы перехватываем кнопки по их классам и даем им наши кастомные тексты:
-                    const confirmBtn = document.querySelector('.custom-modal-btn.btn-confirm');
-                    const cancelBtn = document.querySelector('.custom-modal-btn.btn-cancel');
-
-                    if (confirmBtn) confirmBtn.innerText = 'Попробовать снова';
-                    if (cancelBtn) cancelBtn.innerText = 'На военный флот';
-
-                    // Ждем, что нажмет игрок
-                    const wantsToPlayAgain = await confirmPromise;
-
-                    if (wantsToPlayAgain) {
-                        // Кликнули по левой кнопке: Рестарт
-                        location.reload();
-                    } else {
-                        // Кликнули по правой кнопке: Уходим на Морской Бой
-                        window.location.href = '../battleship/index.html';
-                    }
-
-                }, 15000);
-
-                return true; // Полный перехват, останавливаем дальнейший движок раздачи
+            const actionPanel = document.querySelector('.action-buttons, .controls');
+            if (actionPanel) {
+                actionPanel.style.opacity = '0.5';
+                actionPanel.style.pointerEvents = 'none';
             }
+
+            const playerSeat = document.querySelector('.player, #player');
+            if (playerSeat) {
+                playerSeat.classList.add('eliminated');
+                playerSeat.style.opacity = '0.4';
+            }
+
+            setTimeout(async () => {
+                const messageText = "БАНКРОТ. Мужики сочувственно промолчали. Фишки кончились, но жизнь продолжается...";
+                const confirmPromise = showCustomConfirm(messageText);
+
+                const confirmBtn = document.querySelector('.custom-modal-btn.btn-confirm');
+                const cancelBtn = document.querySelector('.custom-modal-btn.btn-cancel');
+
+                if (confirmBtn) confirmBtn.innerText = 'Попробовать снова';
+                if (cancelBtn) cancelBtn.innerText = 'На военный флот';
+
+                const wantsToPlayAgain = await confirmPromise;
+
+                if (wantsToPlayAgain) {
+                    location.reload();
+                } else {
+                    window.location.href = '../battleship/index.html';
+                }
+
+            }, 15000);
+
+            return true;
         }
 
         return false;
@@ -1019,14 +1002,23 @@ const PokerEngine = {
         if (!playerObj || !playerObj.id) return;
 
         // 1. Находим контейнер игрока или бота по его жесткому ID (#player, #bot-1, #bot-2, #bot-3)
+        // Для игрока также проверяем класс .player, если на нем нет ID
         const playerEl = document.querySelector(`#${playerObj.id}`) || document.querySelector(`.${playerObj.id}`);
-        if (!playerEl) return;
 
-        // 2. Обновляем баланс
-        const balanceSpan = playerEl.querySelector(`#bot-balance-${playerObj.id.replace('bot-', '')}`)
-            || playerEl.querySelector('#p-balance')
-            || playerEl.querySelector('[id*="balance"]');
+        // Переменная для хранения элемента баланса
+        let balanceSpan = null;
 
+        // 2. ЖЕСТКИЙ ФИКС ДЛЯ ИГРОКА: Ищем его баланс глобально по документу, а не внутри контейнера
+        if (playerObj.id === 'player') {
+            balanceSpan = document.querySelector('#p-balance')
+                || (playerEl ? playerEl.querySelector('[id*="balance"]') : null);
+        } else if (playerEl) {
+            // Для ботов ищем внутри их карточек, как и раньше
+            balanceSpan = playerEl.querySelector(`#bot-balance-${playerObj.id.replace('bot-', '')}`)
+                || playerEl.querySelector('[id*="balance"]');
+        }
+
+        // Если нашли — обновляем цифру
         if (balanceSpan) {
             balanceSpan.textContent = `${playerObj.budget}$`;
         }
@@ -1038,13 +1030,14 @@ const PokerEngine = {
         }
 
         // 3. ОБНОВЛЕНИЕ ДАННЫХ ДЛЯ БОТОВ (Имя + Пол)
-        if (playerObj.id !== 'player') {
+        if (playerObj.id !== 'player' && playerEl) {
 
             // ЖЕСТКИЙ ФИКС ИМЕНИ: Находим элемент, где сидит имя бота, и ставим новое из памяти
             const nameEl = playerEl.querySelector('.bot-name')
+                || playerEl.querySelector('.white') // Добавил твой класс .white из updateWholeTableUI
                 || playerEl.querySelector('.name')
                 || playerEl.querySelector('strong')
-                || playerEl.querySelector('.player-name'); // проверь какой класс у тебя в Virtual DOM
+                || playerEl.querySelector('.player-name');
 
             if (nameEl && playerObj.name) {
                 console.log(`[UI FIX]: Меняем имя на слоте ${playerObj.id}: на ${playerObj.name}`);
@@ -1055,7 +1048,7 @@ const PokerEngine = {
             const genderMarker = playerEl.querySelector('.gender-marker') || playerEl.querySelector('.gender');
             if (genderMarker) {
                 // Счищаем всё старое
-                genderMarker.classList.remove('gender-male', 'gender-female', 'male', 'female');
+                genderMarker.className = 'gender-marker'; // Безопасный полный сброс классов
 
                 // Ставим актуальный класс пола из объекта
                 if (playerObj.gender === 'female' || playerObj.gender === 'f') {
@@ -1638,9 +1631,18 @@ function startNewHand() {
 
 //--- А Д   И   И З Р А И Л Ь --------------------------------------
 function updateTournamentLevel() {
+    // 1. Инициализируем стейт, если раздачи еще не начались
     if (!PokerEngine.gameState.handsPlayed) {
         PokerEngine.gameState.handsPlayed = 0;
         PokerEngine.gameState.currentLevelIdx = 0;
+
+        //  При самом первом запуске принудительно берем 1-й уровень из структуры       
+        const startLevel = TOURNAMENT_STRUCTURE[0];
+        if (startLevel) {
+            SMALL_BLIND = startLevel.sb;
+            BIG_BLIND = startLevel.bb;
+            console.log(`[TOURNAMENT]: Турнир стартовал. Уровень 1. SB: ${SMALL_BLIND}$, BB: ${BIG_BLIND}$`);
+        }
     }
 
     PokerEngine.gameState.handsPlayed++;
@@ -1663,8 +1665,6 @@ function updateTournamentLevel() {
         showMessage_(`⚠️ Блайнды выросли! Малый: ${SMALL_BLIND}$, Большой: ${BIG_BLIND}$`, 4000);
     }
 }
-
-
 //___________ад и израиль ______________________________________________
 
 
