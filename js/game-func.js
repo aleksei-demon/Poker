@@ -454,7 +454,7 @@ function loadSeptemberWeather() {
     if (StoryState.weatherLoaded) return;
 
     // Сначала определяем координаты по IP-адресу игрока
-    fetch('http://ip-api.com/json/?fields=status,lat,lon')
+    fetch('https://ip-api.com/json/?fields=status,lat,lon')
         .then(res => res.json())
         .then(geo => {
             if (geo && geo.status === 'success') {
