@@ -35,6 +35,22 @@ function getNextActivePlayerIndex(startIndex) {
 
 // Пул новых ботов, которые ждут своей очереди в клубе
 const BOT_RESERVE = [
+    {
+        name: 'Ветал',
+        gender: 'male',
+        style: 'MANIAC',
+        bluffChance: 0.25,
+        aggression: 2.5,
+        looseFactor: 1.3,
+        // Скрытое DLC-состояние ярости
+        rageState: {
+            isActive: false,  // Активируется после первого вылета или на 2 круге
+            level: 0,         // От 0 до 100
+            badCardsStreak: 0 // Счетчик плохих рук подряд
+        }
+    },
+    { name: '404', gender: 'female', style: 'GTO', bluffChance: 0.12, aggression: 1.0, looseFactor: 1.0 },
+
     { name: 'Аркадий', gender: 'male', style: 'AGRESSIVE', bluffChance: 0.15, aggression: 2.2, looseFactor: 1.1 },
     { name: 'Платон', gender: 'male', style: 'MATH', bluffChance: 0.00, aggression: 1.0, looseFactor: 0.9 },
     { name: 'Федя', gender: 'male', style: 'BLUFF', bluffChance: 0.40, aggression: 1.6, looseFactor: 1.2 },
@@ -42,8 +58,6 @@ const BOT_RESERVE = [
     { name: 'Гарик', gender: 'male', style: 'LOOSE', bluffChance: 0.20, aggression: 1.4, looseFactor: 1.4 },
     { name: 'Сентябрь', gender: 'male', style: 'RANDOM', bluffChance: 0.50, aggression: 1.8, looseFactor: 1.0 },
     { name: 'Болт', gender: 'male', style: 'BOLT', bluffChance: 0.99, aggression: 5.0, looseFactor: 2.0 },
-
-    // Добавляем девчонок в резерв, чтобы протестировать смену пола на полную!
     { name: 'Катя', gender: 'female', style: 'MATH', bluffChance: 0.05, aggression: 1.2, looseFactor: 0.95 },
     { name: 'Диана', gender: 'female', style: 'AGRESSIVE', bluffChance: 0.25, aggression: 2.0, looseFactor: 1.15 },
     { name: 'Ленка', gender: 'female', style: 'BLUFF', bluffChance: 0.45, aggression: 1.5, looseFactor: 1.3 }
@@ -55,15 +69,20 @@ const BOT_RESERVE = [
 
 // 1. Берем случайного бота из резерва на место Андрея для ПЕРВОЙ игры
 // (Предполагаем, что у ботов в BOT_RESERVE уже прописаны name, style, gender)
-const randomFirstBot = BOT_RESERVE[Math.floor(Math.random() * BOT_RESERVE.length)];
+// const randomFirstBot = BOT_RESERVE[Math.floor(Math.random() * BOT_RESERVE.length)];
 
 // 2. Инициализируем профили (Ветал и 404 всегда со старта)
 // gender может быть 'male' (m) или 'female' (f)
+// Фильтруем резерв для первого слота, чтобы не получить двух Веталов за столом
+const safeFirstBotPool = BOT_RESERVE.filter(b => b.name !== 'Ветал' && b.name !== '404');
+const randomFirstBot = safeFirstBotPool[Math.floor(Math.random() * safeFirstBotPool.length)];
+
+// Инициализируем стартовые профили (Ветал и 404 железно на месте)
 const BOT_PROFILES = {
     'bot-1': {
         name: randomFirstBot.name,
         style: randomFirstBot.style,
-        gender: randomFirstBot.gender || 'male', // Страховка дефолта
+        gender: randomFirstBot.gender || 'male',
         bluffChance: randomFirstBot.bluffChance || 0.15,
         aggression: randomFirstBot.aggression || 1.2,
         looseFactor: randomFirstBot.looseFactor || 1.1
@@ -74,7 +93,9 @@ const BOT_PROFILES = {
         gender: 'male',
         bluffChance: 0.25,
         aggression: 2.5,
-        looseFactor: 1.3
+        looseFactor: 1.3,
+        // На старте первого турнира ярость Ветала ЕЩЕ спит
+        rageState: { isActive: false, level: 0, badCardsStreak: 0 }
     },
     'bot-3': {
         name: '404',
@@ -86,23 +107,17 @@ const BOT_PROFILES = {
     }
 };
 
-// 3. СВЯЗЫВАЕМ СТАРТОВЫЙ МАССИВ ИГРОКОВ С ПРОФИЛЯМИ (С полной передачей гендера!)
+// Привязываем к объекту игроков (players). 
+// Добавляем ссылку на rageState Веталу прямо в объект игрока для быстрого доступа из движка.
 let players = [
-    {
-        id: 'player',
-        name: 'Вы',
-        budget: 100,
-        cards: [],
-        gender: 'male' // Или любой дефолт, для игрока обычно UI статичен
-    },
+    { id: 'player', name: 'Вы', budget: 100, cards: [], gender: 'male' },
     {
         id: 'bot-1',
         name: BOT_PROFILES['bot-1'].name,
-        gender: BOT_PROFILES['bot-1'].gender, // ВОТ ОН, КЛЮЧЕВОЙ ФИКС ДЛЯ ИНДИКАТОРА!
+        gender: BOT_PROFILES['bot-1'].gender,
         budget: 100,
         strategy: BOT_PROFILES['bot-1'].style,
         cards: [],
-        // Доп. переменные для ИИ, чтобы runBotLogic брал их прямо отсюда
         bluffChance: BOT_PROFILES['bot-1'].bluffChance,
         aggression: BOT_PROFILES['bot-1'].aggression,
         looseFactor: BOT_PROFILES['bot-1'].looseFactor
@@ -116,7 +131,9 @@ let players = [
         cards: [],
         bluffChance: BOT_PROFILES['bot-2'].bluffChance,
         aggression: BOT_PROFILES['bot-2'].aggression,
-        looseFactor: BOT_PROFILES['bot-2'].looseFactor
+        looseFactor: BOT_PROFILES['bot-2'].looseFactor,
+        // Ссылка на шкалу ярости
+        rageState: BOT_PROFILES['bot-2'].rageState
     },
     {
         id: 'bot-3',
@@ -130,8 +147,9 @@ let players = [
         looseFactor: BOT_PROFILES['bot-3'].looseFactor
     }
 ];
-
 console.log("[ENGINE INIT]: Профили игроков и гендерные маркеры успешно разложены по памяти.", players);
+
+
 function startNextTournamentRound() {
     console.log("=== СМЕНА СОСТАВА: ЗА СТОЛ САДЯТСЯ НОВЫЕ ИГРОКИ ===");
 
@@ -157,6 +175,21 @@ function startNextTournamentRound() {
             p.bluffChance = currentProfile.bluffChance || 0.15;
             p.aggression = currentProfile.aggression || 1.2;
             p.looseFactor = currentProfile.looseFactor || 1.1;
+
+            // =========================================================================
+            // SPEC: ИНИЦИАЛИЗАЦИЯ ШКАЛЫ ЯРОСТИ ДЛЯ ВЕТАЛА ПРИ ПОВТОРНОМ ВХОДЕ (DLC)
+            // =========================================================================
+            if (p.name === 'Ветал') {
+                p.rageState = {
+                    isActive: true,     // Активируем триггеры ярости на втором круге
+                    level: 0,           // Текущий уровень злости (0 - 100)
+                    badCardsStreak: 0   // Счетчик мусора на префлопе подряд
+                };
+                console.log(`%c[VETAL RAGE]: Ветал вернулся за стол! Шкала ярости взведена.`, "color: #ff3333; font-weight: bold;");
+            } else {
+                // Если на это место сел другой бот — очищаем остатки шкалы ярости
+                delete p.rageState;
+            }
 
             // Массив p.cards НЕ очищаем здесь вслепую, чтобы не сломать раздачу движка!
         }
@@ -728,7 +761,7 @@ const PokerEngine = {
 
     checkTableBankruptcy() {
         // =========================================================================
-        // ЖЕСТКАЯ ЗА ЗАЩИТА: Выбивать или спасать можно ТОЛЬКО когда раздача ОКОНЧЕНА.
+        // ЖЕСТКАЯ ЗАЩИТА: Выбивать или спасать можно ТОЛЬКО когда раздача ОКОНЧЕНА.
         // Если идет PREFLOP, FLOP, TURN или RIVER — игроки с 0 балансом сидят в All-In!
         // =========================================================================
         if (PokerEngine && PokerEngine.gameState) {
@@ -747,6 +780,19 @@ const PokerEngine = {
             const el = document.querySelector(selector);
 
             if (p.budget <= 0) {
+                // =========================================================================
+                // ХУК ЯРОСТИ ВЕТАЛА (DLC): ПЕРЕХВАТ ПЕРЕД ОФИЦИАЛЬНЫМ ВЫЛЕТОМ
+                // =========================================================================
+                if (p.name === 'Ветал' && !p.rageUsed) { // Используем вечный флаг rageUsed вместо сбрасываемого
+                    p.rageUsed = true; // Блокируем навсегда для этой сессии
+                    console.log(`%c[VETAL RAGE]: Ветал обанкротился в первый раз! Запуск единственного переворота стола...`, "color: #ff3333; font-weight: bold;");
+
+                    if (typeof triggerTableFlipEvent === 'function') {
+                        triggerTableFlipEvent(p);
+                    }
+                    return; // Не даем повесить .eliminated прямо сейчас
+                }
+
                 if (el && !el.classList.contains('eliminated')) {
                     el.classList.add('eliminated');
                     console.log(`[TOURNAMENT]: Игрок ${p.name} официально покинул турнир.`);
@@ -816,10 +862,7 @@ const PokerEngine = {
                     saviorBot = kindBots[Math.floor(Math.random() * kindBots.length)];
                 }
             }
-            // Все остальные случаи (бот обнулил бота, или 404 пытается кого-то спасти) — игнорируются.
-            // saviorBot останется null, и сработает стандартный вылет.
 
-            // Если спаситель найден по одному из двух разрешенных сценариев — запускаем магию
             if (saviorBot) {
                 StoryState.mihalichSavedPlayer = true;
                 console.log(`[STORY]: Бот ${saviorBot.name} спасает ${luckyReceiver.name} на сумму ${giftAmount}$.`);
@@ -973,10 +1016,10 @@ const PokerEngine = {
                 if (wantsToPlayAgain) {
                     location.reload();
                 } else {
-                    window.location.href = '../battleship/index.html';
+                    window.location.href = '../battleship/index.html'; //
                 }
 
-            }, 15000);
+            }, 25000);
 
             return true;
         }

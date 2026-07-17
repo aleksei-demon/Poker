@@ -308,7 +308,7 @@ function showCustomConfirm(message) {
 
         const confirmBtn = document.createElement('button');
         confirmBtn.className = 'custom-modal-btn btn-confirm';
-        confirmBtn.innerText = 'Принять вызов';
+        confirmBtn.innerText = 'Принять';
 
         const cancelBtn = document.createElement('button');
         cancelBtn.className = 'custom-modal-btn btn-cancel';
@@ -546,3 +546,263 @@ function updateWholeTableUI() {
         bankEl.textContent = ` ${PokerEngine.gameState.pot || 0} $ `;
     }
 }
+
+
+function triggerTableFlipEvent(vetalPlayer) {
+    console.log(`[VETAL RAGE]: Сценарий ярости запущен для игрока: ${vetalPlayer.name} (ID: ${vetalPlayer.id})`);
+
+    // 1. ДИНАМИЧЕСКОЕ ОПРЕДЕЛЕНИЕ СЕЛЕКТОРОВ ВЕТАЛА
+    const vetalId = vetalPlayer.id.startsWith('#') ? vetalPlayer.id : `#${vetalPlayer.id}`;
+    // Вытаскиваем цифру из ID (например, 'bot-2' -> '2'), чтобы найти его баланс #bot-balance-2
+    const vetalNum = vetalPlayer.id.replace('bot-', '');
+    const vetalBalanceId = `#bot-balance-${vetalNum}`;
+
+    // 2. ПОЛНАЯ БЛОКИРОВКА УПРАВЛЕНИЯ
+    const actionPanel = document.querySelector('.button-panel');
+    const sliderContainer = document.getElementById('raise-slider-container');
+    if (actionPanel) {
+        actionPanel.style.opacity = '0.3';
+        actionPanel.style.pointerEvents = 'none';
+    }
+    if (sliderContainer) {
+        sliderContainer.style.opacity = '0.3';
+        sliderContainer.style.pointerEvents = 'none';
+    }
+
+    // Очищаем таймер ботов, чтобы никто не ходил во время погрома
+    if (PokerEngine && PokerEngine.gameState && PokerEngine.gameState.botTimer) {
+        clearTimeout(PokerEngine.gameState.botTimer);
+        PokerEngine.gameState.botTimer = null;
+    }
+
+    // 3. ЦЕПОЧКА ДИАЛОГОВ И АНИМАЦИИ
+    // Первая реплика летит строго из динамического ID Ветала
+    botSay(vetalId, "Да как так-то?! Опять ривер?! Вы издеваетесь?!", 3500);
+
+    // Через 3.5 секунды — Взрыв ярости и переворот стола
+    setTimeout(() => {
+        botSay(vetalId, "ДА ПОШЛО ОНО ВСЁ! *толкает стол*", 4000);
+
+        // ЭФФЕКТЫ ДЕСТРУКЦИИ
+        const table = document.querySelector('.cards-table');
+        const botPlaces = document.querySelectorAll('.bot-place');
+        const playerSeat = document.querySelector('.player');
+
+        if (table) {
+            table.classList.add('table-flipped'); // Разворот стола против часовой стрелки вокруг правого края
+        }
+
+        // Карты и фишки эффектно разлетаются в 3D
+        createFlyingCardsAndChips();
+
+        // Трясем боксы ВСЕХ ОСТАЛЬНЫХ игроков от удара (Ветала не трясем, он источник импульса!)
+        botPlaces.forEach(bot => {
+            if (bot.id !== vetalPlayer.id) { // Исключаем Ветала динамически
+                bot.classList.add('table-shake-effect');
+                setTimeout(() => bot.classList.remove('table-shake-effect'), 1000);
+            }
+        });
+        if (playerSeat) {
+            playerSeat.classList.add('table-shake-effect');
+            setTimeout(() => playerSeat.classList.remove('table-shake-effect'), 1000);
+        }
+
+    }, 3800);
+
+    // =========================================================================
+    // КИНЕМАТОГРАФИЧЕСКАЯ ПАУЗА (12000 мс / 12 секунд)
+    // Игрок сидит около 8 секунд в полном ступоре перед перевернутым пустым столом
+    // =========================================================================
+    setTimeout(async () => {
+        // Запускаем диалог-конфирм
+        const messageText = "Ветал в ярости толкнул стол! Фишки и карты разлетелись по полу. Помочь ему собрать карты и вернуть за стол?";
+        const playerChoice = await showCustomConfirm(messageText);
+
+        const table = document.querySelector('.cards-table');
+        if (table) table.classList.remove('table-flipped'); // Плавно возвращаем стол на место
+
+        if (playerChoice) {
+            // ИГРОК ПОМОГ: Реанимируем Ветала
+            console.log("[VETAL RAGE]: Игрок помог Веталу. Ветал спасен.");
+
+            vetalPlayer.budget = 20;
+            vetalPlayer.rageUsed = true; // На всякий случай жестко фиксируем, что пар выпущен
+
+            // Сбрасываем визуальный вылет динамически
+            const vetalEl = document.querySelector(vetalId);
+            if (vetalEl) {
+                vetalEl.classList.remove('eliminated');
+                vetalEl.style.opacity = '1';
+
+                // Находим баланс (по ID или внутри элемента) и обновляем
+                const balanceEl = document.querySelector(vetalBalanceId) || vetalEl.querySelector('[id*="balance"]');
+                if (balanceEl) balanceEl.textContent = '20$';
+            }
+
+            botSay(vetalId, "Ух... Извини, бро, психанул. Спасибо, что помог собрать. Погнали дальше.", 5000);
+
+            // Возвращаем управление и сдаем карты через 5 секунд
+            setTimeout(() => {
+                restoreControlsAndContinue();
+            }, 5000);
+
+        } else {
+            // ИГРОК НЕ ПОМОГ: Ветал вылетает окончательно
+            console.log("[VETAL RAGE]: Игрок отказался помогать. Ветал уходит.");
+
+            botSay(vetalId, "Да ну вас нафиг, пойду я...", 3000);
+
+            setTimeout(() => {
+                const vetalEl = document.querySelector(vetalId);
+                if (vetalEl) {
+                    vetalEl.classList.add('eliminated');
+                    vetalEl.style.opacity = '0.4';
+                }
+
+                restoreControlsAndContinue();
+            }, 3000);
+        }
+
+    }, 12000); // 12-секундный режиссерский тайминг
+}
+
+// Функция возврата интерфейса к жизни и запуска новой раздачи
+function restoreControlsAndContinue() {
+    const actionPanel = document.querySelector('.button-panel');
+    const sliderContainer = document.getElementById('raise-slider-container');
+
+    if (actionPanel) {
+        actionPanel.style.opacity = '1';
+        actionPanel.style.pointerEvents = 'auto';
+    }
+    if (sliderContainer) {
+        sliderContainer.style.opacity = '1';
+        sliderContainer.style.pointerEvents = 'auto';
+    }
+
+    const boardEl = document.querySelector('#board');
+    if (boardEl) boardEl.innerHTML = '';
+
+    if (typeof PokerEngine !== 'undefined' && PokerEngine.render) {
+        try { PokerEngine.render(); } catch (e) { console.warn(e); }
+    }
+
+    // Запуск новой руки
+    if (typeof startNewHand === 'function') {
+        startNewHand();
+    }
+}
+
+function createFlyingCardsAndChips() {
+    const table = document.querySelector('.cards-table');
+    if (!table) return;
+
+    // 1. НАХОДИМ И КЛОНИРУЕМ РЕАЛЬНЫЕ КАРТЫ
+    const realCards = document.querySelectorAll(
+        '#board .card, [id^="cards-"] .card, #cards-p .card, .bot-place .card, .player .card'
+    );
+
+    realCards.forEach((originalCard) => {
+        const rect = originalCard.getBoundingClientRect();
+        const tableRect = table.getBoundingClientRect();
+
+        const flyingCard = originalCard.cloneNode(true);
+        flyingCard.classList.add('flying-item', 'flying-card-3d');
+
+        flyingCard.style.left = `${rect.left - tableRect.left}px`;
+        flyingCard.style.top = `${rect.top - tableRect.top}px`;
+        flyingCard.style.position = 'absolute';
+        flyingCard.style.margin = '0';
+
+        // Бешеная траектория полета со стола вниз и влево (по ходу движения стола)
+        const randomX = -500 - Math.random() * 400; // Летят влево-вниз
+        const randomY = -200 + Math.random() * 400;
+        const randomZ = 300 + Math.random() * 400;  // Вылетают вперед на камеру
+        const rotateX = 540 + Math.random() * 720;
+        const rotateY = 540 + Math.random() * 720;
+        const rotateZ = (Math.random() - 0.5) * 360;
+
+        flyingCard.style.setProperty('--fly-x', `${randomX}px`);
+        flyingCard.style.setProperty('--fly-y', `${randomY}px`);
+        flyingCard.style.setProperty('--fly-z', `${randomZ}px`);
+        flyingCard.style.setProperty('--fly-rotX', `${rotateX}deg`);
+        flyingCard.style.setProperty('--fly-rotY', `${rotateY}deg`);
+        flyingCard.style.setProperty('--fly-rotZ', `${rotateZ}deg`);
+
+        table.appendChild(flyingCard);
+
+        // МГНОВЕННО прячем оригинал БЕЗ мерцания
+        originalCard.style.visibility = 'hidden';
+
+        setTimeout(() => flyingCard.remove(), 2500);
+    });
+
+    // 2. АННИГИЛИРУЕМ СТАТИЧЕСКИЕ ФИШКИ НА СТОЛЕ И КЛОНИРУЕМ ИХ В ПОЛЕТ
+    // Замени селекторы ниже на те классы фишек/банков, которые используются у тебя
+    const staticChips = document.querySelectorAll('.pot, .pot-chips, .dealer-button, .player-bet, [class*="chip"]');
+
+    staticChips.forEach((originalChip) => {
+        // Запоминаем координаты оригинальной фишки
+        const rect = originalChip.getBoundingClientRect();
+        const tableRect = table.getBoundingClientRect();
+
+        // Создаем летящий 3D-клон на ее месте
+        const flyingChip = document.createElement('div');
+        flyingChip.className = 'flying-item flying-chip-3d';
+
+        // Переносим фоновый цвет или стиль оригинальной фишки, если он есть
+        const origBg = window.getComputedStyle(originalChip).backgroundColor;
+        flyingChip.style.background = `radial-gradient(circle, ${origBg || '#ff3333'} 60%, #111 100%)`;
+
+        flyingChip.style.left = `${rect.left - tableRect.left}px`;
+        flyingChip.style.top = `${rect.top - tableRect.top}px`;
+        flyingChip.style.position = 'absolute';
+
+        // Физика разлета фишек влево-вниз (по вектору удара)
+        const randomX = -600 - Math.random() * 500;
+        const randomY = -100 + Math.random() * 450;
+        const randomZ = 400 + Math.random() * 500;
+        const rotateX = (Math.random() - 0.5) * 1440;
+        const rotateY = (Math.random() - 0.5) * 1440;
+
+        flyingChip.style.setProperty('--fly-x', `${randomX}px`);
+        flyingChip.style.setProperty('--fly-y', `${randomY}px`);
+        flyingChip.style.setProperty('--fly-z', `${randomZ}px`);
+        flyingChip.style.setProperty('--fly-rotX', `${rotateX}deg`);
+        flyingChip.style.setProperty('--fly-rotY', `${rotateY}deg`);
+
+        table.appendChild(flyingChip);
+
+        // МГНОВЕННО и бесследно гасим оригинальную фишку на столе
+        originalChip.style.visibility = 'hidden';
+        originalChip.style.opacity = '0'; // на всякий случай дублируем
+
+        setTimeout(() => flyingChip.remove(), 2500);
+    });
+}
+
+// Запасной генератор на случай пустой доски
+function generateFallbackCards(table) {
+    for (let i = 0; i < 5; i++) {
+        const card = document.createElement('div');
+        card.className = 'card flying-item flying-card-3d';
+        card.innerHTML = `
+            <div class="card-back" style="background: repeating-linear-gradient(45deg, #a00, #a00 10px, #800 10px, #800 20px);"></div>
+            <div class="card-front" style="background: white; color: black; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.5rem;">A♠</div>
+        `;
+        card.style.left = '50%';
+        card.style.top = '50%';
+
+        card.style.setProperty('--fly-x', `${(Math.random() - 0.5) * 600}px`);
+        card.style.setProperty('--fly-y', `${-300 - Math.random() * 300}px`);
+        card.style.setProperty('--fly-z', `${300}px`);
+        card.style.setProperty('--fly-rotX', `${720}deg`);
+        card.style.setProperty('--fly-rotY', `${1080}deg`);
+        card.style.setProperty('--fly-rotZ', `${180}deg`);
+
+        table.appendChild(card);
+        setTimeout(() => card.remove(), 2500);
+    }
+}
+
+

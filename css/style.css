@@ -933,6 +933,123 @@ button {
 }
 
 
+/* =========================================================================
+   VETAL RAGE: HIGH-BUDGET 3D EFFECTS
+   ========================================================================= */
+
+/* Контейнер стола получает экстремальную 3D перспективу */
+/* Контейнер стола в режиме вида сверху */
+/* Контейнер стола */
+.cards-table {
+	/* Жесткая ось вращения на правом краю стола (по центру высоты) */
+	transform-origin: 100% 50%;
+	/* Более тяжелая, инертная анимация сдвига */
+	transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+	will-change: transform;
+}
+
+/* Эффект сокрушительного толчка Ветала */
+.cards-table.table-flipped {
+	/* Поворот на -18° вокруг правого края + физический сдвиг всей махины вниз */
+	transform: rotate(-18deg) translateY(30px);
+	/* Тень смещается глубоко влево и вниз, подчеркивая отрыв левого края от пола */
+	box-shadow: -40px 50px 90px rgba(0, 0, 0, 0.85);
+}
+
+/* Бешеная тряска аватаров игроков от удара по столу */
+.table-shake-effect {
+	animation: heavyTableImpact 0.7s cubic-bezier(.36, .07, .19, .97) both;
+}
+
+@keyframes heavyTableImpact {
+
+	10%,
+	90% {
+		transform: translate3d(-4px, -6px, 0) rotate(-2deg);
+	}
+
+	20%,
+	80% {
+		transform: translate3d(6px, 8px, 0) rotate(3deg);
+	}
+
+	30%,
+	50%,
+	70% {
+		transform: translate3d(-8px, -12px, 0) rotate(-4deg);
+	}
+
+	40%,
+	60% {
+		transform: translate3d(8px, 12px, 0) rotate(4deg);
+	}
+}
+
+/* Общие правила для всех летящих 3D объектов */
+.flying-item {
+	pointer-events: none;
+	z-index: 9999;
+	will-change: transform, opacity;
+}
+
+/* ЛЕТЯЩАЯ КАРТА: Полное сохранение 3D-структуры оригинала */
+.flying-card-3d {
+	width: 80px;
+	/* Подгони под размеры своих карт */
+	height: 115px;
+	transform-style: preserve-3d;
+	backface-visibility: hidden;
+	animation: flyAndSpin3D 2.2s cubic-bezier(0.1, 0.8, 0.25, 1) forwards;
+}
+
+/* Важно, чтобы лицо и рубашка внутри клонированной карты вели себя правильно в 3D */
+.flying-card-3d .card-front,
+.flying-card-3d .card-back {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	backface-visibility: hidden;
+}
+
+.flying-card-3d .card-back {
+	transform: rotateY(180deg);
+	/* Рубашка сзади */
+}
+
+/* ЛЕТЯЩАЯ ФИШКА: Объемный 3D-кругляшок с тиснением */
+.flying-chip-3d {
+	width: 25px;
+	height: 25px;
+	border-radius: 50%;
+	border: 2px dashed #fff;
+	box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5), inset 0 0 8px rgba(0, 0, 0, 0.8);
+	transform-style: preserve-3d;
+	animation: flyAndSpin3D 2.0s cubic-bezier(0.15, 0.85, 0.3, 1) forwards;
+}
+
+/* СУПЕР-АНИМАЦИЯ ПОЛЕТА: Вверх, взрыв на зрителя, кувырки и падение под стол */
+@keyframes flyAndSpin3D {
+	0% {
+		transform: translate3d(0, 0, 0) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+		opacity: 1;
+	}
+
+	15% {
+		/* Эффект сочного вылета "в камеру" */
+		opacity: 1;
+	}
+
+	85% {
+		opacity: 1;
+	}
+
+	100% {
+		/* Падение вниз экрана под действием гравитации */
+		transform: translate3d(var(--fly-x), var(--fly-y), var(--fly-z)) rotateX(var(--fly-rotX)) rotateY(var(--fly-rotY)) rotateZ(var(--fly-rotZ));
+		opacity: 0;
+	}
+}
+
 /* ====== O R I E N T A T I O N   P O R T R A I T ============== O R I E N T A T I O N   P O R T R A I T ========================================== */
 @media screen and (orientation: portrait) {
 
